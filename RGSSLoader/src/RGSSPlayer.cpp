@@ -65,7 +65,7 @@ void RGSSPlayer::GetRGSSADPath() {
 void RGSSPlayer::CreatPlayerWindow() {
     int _x = GetSystemMetrics(SM_CXSCREEN)/2 - nWidth/2;
     int _y = GetSystemMetrics(SM_CYSCREEN)/2 - nHeight/2;
-    SDL_Window *window = SDL_CreateWindow("", _x, _y, nWidth, nHeight, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("", _x, _y, nWidth, nHeight, SDL_WINDOW_SHOWN);
     if (!window) {
         MessageBoxError(0, szTitle, L"创建窗口失败，程序终止！");
         ExitProcess(0);
@@ -96,6 +96,32 @@ void RGSSPlayer::LoadRGSS() {
         MessageBoxError(hWnd, szTitle, L"加载RGSS核心库失败，路径： %s", szLibrary);
         ExitProcess(0);
     }
+    
+#define __get_ptr(fn) lpfn##fn = (fn)GetProcAddress(hRGSSCore, #fn);  \
+       if (!lpfn##fn) {  \
+           MessageBoxError(hWnd, szTitle, L"加载RGSS核心库函数 %s 失败", L#fn);  \
+           ExitProcess(0); \
+       }
+
+    __get_ptr(RGSSEval);
+    __get_ptr(RGSSGameMain);
+    __get_ptr(RGSSInitialize3);
+    __get_ptr(RGSSSetupFonts);
+    __get_ptr(RGSSSetupRTP);
+    
+#undef __get_ptr
+
+    static wchar_t szRtpName[1024];
+    if (!lpfnRGSSSetupRTP(szIniPath, szRtpName, 1024)) {
+        MessageBoxError(hWnd, szTitle, L"找不到 RGSS-RTP : %s", szRtpName);
+        ExitProcess(0);
+    }
+
+    lpfnRGSSInitialize3(hRGSSCore);
+}
+
+void RGSSPlayer::MakePreRubyScripts() {
+
 }
 
 void RGSSPlayer::InitPlayer() {
@@ -106,4 +132,20 @@ void RGSSPlayer::InitPlayer() {
     lpArgv = CommandLineToArgvW(GetCommandLineW(), &nArgc);
     CreatPlayerWindow();
     LoadRGSS();
+    MakePreRubyScripts();
+}
+
+void RGSSPlayer::DestroyPlayer() {
+    if (window) {
+        SDL_DestroyWindow(window);
+        window = nullptr;
+    }
+    if (hRGSSCore) {
+        FreeLibrary(hRGSSCore);
+        hRGSSCore = nullptr;
+    }
+}
+
+void RGSSPlayer::MainLoop() {
+    lpfnRGSSGameMain(hWnd, szScripts, (lpRGSSAD ? reinterpret_cast<wchar_t **>(lpRGSSAD):&lpRGSSAD));
 }
