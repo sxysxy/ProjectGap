@@ -5,3 +5,7 @@ Release
 *.ilk
 *.iobj
 *.ipdb
+lib/*.exp
+lib/*.ilk
+lib/*.lib
+lib/*.pdb

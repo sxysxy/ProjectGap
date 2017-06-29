@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include <Common\include\GraphicsInfo.h>
 
 class RGSSPlayer {
 public:
@@ -33,6 +34,8 @@ public:
     RGSSEval lpfnRGSSEval;
     RGSSGameMain lpfnRGSSGameMain;
 
+    SDL_Renderer *renderer;
+
 private:
     void GetAppPath();
     void LoadIniConfig();
@@ -40,6 +43,7 @@ private:
     void CreatPlayerWindow();
     void LoadRGSS();
     void MakePreRubyScripts();
+    void InitD3DContext();
 public: 
     void InitPlayer();
     void MainLoop();

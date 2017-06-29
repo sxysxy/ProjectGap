@@ -93,13 +93,13 @@ void RGSSPlayer::CreatPlayerWindow() {
 void RGSSPlayer::LoadRGSS() {
     hRGSSCore = LoadLibraryW(szLibrary);
     if (!hRGSSCore) {
-        MessageBoxError(hWnd, szTitle, L"加载RGSS核心库失败，路径： %s", szLibrary);
+        MessageBoxError(hWnd, szTitle, L"加载RGSS核心库失败，路径： %s，程序终止！", szLibrary);
         ExitProcess(0);
     }
     
 #define __get_ptr(fn) lpfn##fn = (fn)GetProcAddress(hRGSSCore, #fn);  \
        if (!lpfn##fn) {  \
-           MessageBoxError(hWnd, szTitle, L"加载RGSS核心库函数 %s 失败", L#fn);  \
+           MessageBoxError(hWnd, szTitle, L"加载RGSS核心库函数 %s 失败，程序终止！", L#fn);  \
            ExitProcess(0); \
        }
 
@@ -118,10 +118,37 @@ void RGSSPlayer::LoadRGSS() {
     }
 
     lpfnRGSSInitialize3(hRGSSCore);
+
+    for (int i = 0; lpArgv && i < nArgc; i++) {
+        if (!lstrcmpW(lpArgv[i], L"btest")) {
+            lpRGSSAD = 0;
+            lpfnRGSSEval(u8"$TEST = true");
+            lpfnRGSSEval(u8"$BTEST = true");
+        }else {
+            if (!lstrcmpW(lpArgv[i], L"test")) {
+                lpRGSSAD = 0;
+                lpfnRGSSEval(u8"$TEST = true");
+            }else
+                lpfnRGSSEval(u8"$TEST = false");
+            lpfnRGSSEval(u8"$BTEST = false");
+        }
+    }
+
+}
+
+void RGSSPlayer::InitD3DContext() {
+    renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+                                            //硬件加速，可以渲染贴图
+    if (!renderer) {
+        MessageBoxError(hWnd, szTitle, L"初始化D3D⑨渲染器失败，程序终止！");
+        ExitProcess(0);
+    }
+    SDL_RenderClear(renderer);
 }
 
 void RGSSPlayer::MakePreRubyScripts() {
-
+    
+    
 }
 
 void RGSSPlayer::InitPlayer() {
@@ -132,6 +159,7 @@ void RGSSPlayer::InitPlayer() {
     lpArgv = CommandLineToArgvW(GetCommandLineW(), &nArgc);
     CreatPlayerWindow();
     LoadRGSS();
+    InitD3DContext();
     MakePreRubyScripts();
 }
 
