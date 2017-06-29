@@ -81,7 +81,7 @@ void RGSSPlayer::CreatPlayerWindow() {
                 if (AllocConsole()) {
                     SetConsoleTitle(L"RGSS Console");
                     freopen("conout$", "w", stdout);
-                    freopen("conerr$", "w", stderr);
+                    freopen("conout$", "w", stderr);
                     freopen("conin$", "r", stdin);
                 }
                 break;
@@ -146,9 +146,26 @@ void RGSSPlayer::InitD3DContext() {
     SDL_RenderClear(renderer);
 }
 
-void RGSSPlayer::MakePreRubyScripts() {
-    
-    
+void RGSSPlayer::LoadPlugin() {
+    hPlugin = LoadLibraryW(L"lib\\RGSSRuntimePlugin.dll");
+    if (!hPlugin) {
+        MessageBoxError(hWnd, szTitle, L"加载运行时插件 lib\\RGSSRuntimePlugin.dll 失败，程序终止！");
+        ExitProcess(0);
+    }
+
+    typedef void (*lpfnInitPlugin)(PluginData *data);
+
+    PluginData data;
+    data.GraphicsInformation.renderer = renderer;
+    data.GraphicsInformation.window = window;
+    data.hRGSSCore = hRGSSCore;
+
+    lpfnInitPlugin InitPlugin = (lpfnInitPlugin)GetProcAddress(hPlugin, "InitPlugin");
+    if (!InitPlugin) {
+        MessageBoxError(hWnd, szTitle, L"无法找到运行时插件初始化函数 InitPlugin，程序终止！");
+        ExitProcess(0);
+    }
+    InitPlugin(&data);
 }
 
 void RGSSPlayer::InitPlayer() {
@@ -160,7 +177,7 @@ void RGSSPlayer::InitPlayer() {
     CreatPlayerWindow();
     LoadRGSS();
     InitD3DContext();
-    MakePreRubyScripts();
+    LoadPlugin();
 }
 
 void RGSSPlayer::DestroyPlayer() {
@@ -171,6 +188,10 @@ void RGSSPlayer::DestroyPlayer() {
     if (hRGSSCore) {
         FreeLibrary(hRGSSCore);
         hRGSSCore = nullptr;
+    }
+    if (hPlugin) {
+        FreeLibrary(hPlugin);
+        hPlugin = nullptr;
     }
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include <Common\include\GraphicsInfo.h>
+#include <Common\include\PluginData.h>
 
 class RGSSPlayer {
 public:
@@ -36,13 +37,14 @@ public:
 
     SDL_Renderer *renderer;
 
+    HMODULE hPlugin;
 private:
     void GetAppPath();
     void LoadIniConfig();
     void GetRGSSADPath();
     void CreatPlayerWindow();
     void LoadRGSS();
-    void MakePreRubyScripts();
+    void LoadPlugin();
     void InitD3DContext();
 public: 
     void InitPlayer();
