@@ -10,4 +10,6 @@
 #define RGSSRUNTIMEPLUGIN_API __declspec(dllimport)
 #endif
 
+#include <Common\include\PluginData.h>
 
+extern PluginData gPluginData;

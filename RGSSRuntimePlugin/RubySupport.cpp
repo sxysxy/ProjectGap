@@ -28,33 +28,23 @@ namespace Ruby {
     pfn_rb_ary_aset rb_ary_aset;
     pfn_rb_ary_new rb_ary_new;
     pfn_rb_ary_push rb_ary_push;
+    VALUE rb_cObject;
 
     void InitRuntime(HMODULE hRGSSCore) {
 #define __set_ptr(fn) fn = (pfn_##fn)((DWORD)addr_##fn+(DWORD)hRGSSCore);
     __set_ptr(rb_funcall2)
     __set_ptr(rb_define_class)
-    __set_ptr(rb_const_defined)
-    __set_ptr(rb_const_get)
     __set_ptr(rb_intern)
     __set_ptr(rb_define_module)
     __set_ptr(rb_define_module_function)
     __set_ptr(rb_define_global_const)
-    __set_ptr(rb_define_global_function)
     __set_ptr(rb_eval_string_protect)
-    __set_ptr(rb_id2name)
+    __set_ptr(rb_ary_new)
+    __set_ptr(rb_str_new)
+    __set_ptr(rb_define_method)
     __set_ptr(rb_scan_args)
     __set_ptr(rb_class_new_instance)
-    __set_ptr(rb_define_method)
-    __set_ptr(rb_str_new)
-    __set_ptr(rb_str_new2)
-    __set_ptr(rb_define_const)
-    __set_ptr(rb_string_value)
-    __set_ptr(rb_string_value_ptr)
-    __set_ptr(rb_raise)
-    __set_ptr(rb_obj_is_kind_of)
-    __set_ptr(rb_obj_classname)
-    __set_ptr(rb_ary_new)
-    __set_ptr(rb_ary_push)
 #undef __set_ptr
+       // rb_cObject = rb_eval_string_protect("Object", nullptr);
     }
 }

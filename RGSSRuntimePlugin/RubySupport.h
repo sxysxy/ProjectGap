@@ -194,27 +194,34 @@ namespace Ruby {
         return BUILTIN_TYPE(obj);
     }
 
-    //Functions
-    constexpr int addr_rb_funcall2 = 199424;
-    constexpr int addr_rb_define_class = 386480;
+    //Functions in RGSS3001.dll (offset address)
+    constexpr int addr_rb_funcall2 = 0x30D20;                           //OK
+    constexpr int addr_rb_define_class = 0x5E960;                       //OK
+    /*
     constexpr int addr_rb_const_defined = 425680;
     constexpr int addr_rb_const_get = 428048;
-    constexpr int addr_rb_intern = 295376;
+    */
+    constexpr int addr_rb_intern = 0x48400;                             //OK
+    /*
     constexpr int addr_rb_intern2 = 345376;
     constexpr int addr_rb_intern3 = 344080;
     constexpr int addr_rb_fiber_start = 532332;
-    constexpr int addr_rb_define_module = 387072;
-    constexpr int addr_rb_define_module_function = 389200;
-    constexpr int addr_rb_define_global_const = 426224;
-    constexpr int addr_rb_define_global_function = 426224;
-    constexpr int addr_rb_eval_string_protect = 197152;
+    */
+    constexpr int addr_rb_define_module = 0x5E990;                      //OK
+    constexpr int addr_rb_define_module_function = 0x5F1E0;             //OK
+    constexpr int addr_rb_define_global_const = 0x68320;                //OK
+    //constexpr int addr_rb_define_global_function = 426224;
+    constexpr int addr_rb_eval_string_protect = 0x30440;                //OK
+    /*
     constexpr int addr_rb_id2name = 653040;
     constexpr int addr_rb_id2str = 295536;
-    constexpr int addr_rb_scan_args = 389616;
-    constexpr int addr_rb_class_new_instance = 212016;
-    constexpr int addr_rb_define_method = 388576;
-    constexpr int addr_rb_define_singleton_method = 153456;
-    constexpr int addr_rb_str_new = 0x36290;
+    */
+    constexpr int addr_rb_scan_args = 0x5F380;                          //OK
+    constexpr int addr_rb_class_new_instance = 0x33E60;                 //OK
+    constexpr int addr_rb_define_method = 0x5EF70;                      //OK
+    //constexpr int addr_rb_define_singleton_method = 153456;
+    constexpr int addr_rb_str_new = 0x364C0;                            //OK
+    /*
     constexpr int addr_rb_define_const = 0x68070;
     constexpr int addr_rb_str_new2 = 0x36340;
     constexpr int addr_rb_string_value = 0x37A40;
@@ -225,7 +232,8 @@ namespace Ruby {
     constexpr int addr_rb_ary_push = 0x8D2A0;
     constexpr int addr_rb_ary_aref = 0x89C40;
     constexpr int addr_rb_ary_aset = 0x8D870;
-    constexpr int addr_rb_ary_new = 0x88DC0;
+    */
+    constexpr int addr_rb_ary_new = 0x88F70;                            //OK
 
     typedef VALUE(RUBYCALL* RubyFunc)(...);
     typedef void(RUBYCALL* RubyDataFunc)(void*);
@@ -361,5 +369,6 @@ namespace Ruby {
     extern pfn_rb_ary_new rb_ary_new;
     extern pfn_rb_ary_push rb_ary_push;
 
+    extern VALUE rb_cObject;
     void InitRuntime(HMODULE hRGSSCore);
 }// end of namespace 

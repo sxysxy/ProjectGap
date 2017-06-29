@@ -51,3 +51,13 @@ public:
     void MainLoop();
     void DestroyPlayer();
 };
+
+static void __cdecl MessageBoxError(HWND hWnd, const wchar_t *title, const wchar_t *format, ...) {
+    static wchar_t lpwError[RGSSPlayer::MAX_LEN];
+    va_list ap;
+    va_start(ap, format);
+    vswprintf_s(lpwError, format, ap);
+    va_end(ap);
+    MessageBoxW(hWnd, lpwError, title, MB_ICONERROR);
+}
+
