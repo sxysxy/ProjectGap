@@ -18,12 +18,18 @@
     <ClInclude Include="src\stdafx.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\RGSSPlayer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\RGSSLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RGSSPlayer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
