@@ -168,6 +168,19 @@ namespace Ruby {
     static inline bool FIXABLE(long x) {
         return (NEGFIXABLE(x) && (x <= 0 || POSFIXABLE(x)));
     }
+    
+    //Float
+    constexpr int FLONUM_MASK = 0x00;
+    constexpr int FLONUM_FLAG = 0x02;
+    struct RFloat {
+        struct RBasic basic;
+        double float_value;
+    };
+
+    //32位机器上获取Float的double值的方法
+    static inline double rb_float_noflonum_value(VALUE v) {
+        return ((struct RFloat *)v)->float_value;
+    }
 
     //type 
     constexpr VALUE RUBY_IMM_MASK = 0x03;  //immediate value mask
@@ -234,6 +247,7 @@ namespace Ruby {
     constexpr int addr_rb_ary_aset = 0x8D870;
     */
     constexpr int addr_rb_ary_new = 0x88F70;                            //OK
+    constexpr int addr_rb_iv_set = 0x683D0;                             //OK
 
     typedef VALUE(RUBYCALL* RubyFunc)(...);
     typedef void(RUBYCALL* RubyDataFunc)(void*);
@@ -250,14 +264,14 @@ namespace Ruby {
 
     typedef void(*pfn_rb_gc_mark)(VALUE);
 
-    typedef void(*pfn_rb_define_method)(VALUE classmod, char *name, VALUE(*)(), int argc);
+    typedef void(*pfn_rb_define_method)(VALUE classmod, char *name, void *ptr /*VALUE(*)(VALUE, ...)*/, int argc);
     typedef VALUE(*pfn_rb_define_class)(const char*, VALUE);
     typedef VALUE(*pfn_rb_define_module)(const char*);
     typedef VALUE(*pfn_rb_define_class_under)(VALUE, const char*, VALUE);
     typedef VALUE(*pfn_rb_define_module_under)(VALUE, const char*);
 
     typedef	void(*pfn_rb_define_class_method)(VALUE, const char*, RubyFunc, int);
-    typedef	void(*pfn_rb_define_module_function)(VALUE, const char*, RubyFunc, int);
+    typedef	void(*pfn_rb_define_module_function)(VALUE, const char*, void*, int);
     typedef	void(*pfn_rb_define_global_function)(const char*, RubyFunc, int);
 
     typedef void(*pfn_rb_define_alloc_func)(VALUE, VALUE(*rb_alloc_func_t)(VALUE));
@@ -368,7 +382,23 @@ namespace Ruby {
     extern pfn_rb_ary_aset rb_ary_aset;
     extern pfn_rb_ary_new rb_ary_new;
     extern pfn_rb_ary_push rb_ary_push;
+    extern pfn_rb_iv_set rb_iv_set;
+    VALUE __cdecl rb_eval_cstring(const char *code);
+    VALUE __cdecl rb_iv_get(VALUE obj, const char *name);
+
+    //特殊的函数：rgss读取加密档案里面数据的
+    typedef unsigned(*pfn_rgss_load_rgssad_file)(const char *filename, void **ptr_data, int *ptr_length);
+    extern pfn_rgss_load_rgssad_file rgss_load_rgssad_file;
+    constexpr int addr_rgss_load_rgssad_file = 0xC710;
 
     extern VALUE rb_cObject;
     void InitRuntime(HMODULE hRGSSCore);
+    void LoadLibScript(const char *path);
 }// end of namespace 
+
+//备用：
+/*
+0xC710
+sub_1000C710(const char *filename, void **ptr_data, LONG *ptr_length)
+读取加密档案文件
+*/

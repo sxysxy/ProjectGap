@@ -28,6 +28,9 @@ namespace Ruby {
     pfn_rb_ary_aset rb_ary_aset;
     pfn_rb_ary_new rb_ary_new;
     pfn_rb_ary_push rb_ary_push;
+    pfn_rb_iv_set rb_iv_set;
+    pfn_rgss_load_rgssad_file rgss_load_rgssad_file;
+
     VALUE rb_cObject;
 
     void InitRuntime(HMODULE hRGSSCore) {
@@ -44,7 +47,25 @@ namespace Ruby {
     __set_ptr(rb_define_method)
     __set_ptr(rb_scan_args)
     __set_ptr(rb_class_new_instance)
+    __set_ptr(rb_iv_set)
+    __set_ptr(rgss_load_rgssad_file);
 #undef __set_ptr
        // rb_cObject = rb_eval_string_protect("Object", nullptr);
+    }
+    VALUE __cdecl rb_eval_cstring(const char *code) {
+        return rb_eval_string_protect(code, nullptr);
+    }
+
+    VALUE __cdecl rb_iv_get(VALUE obj, const char *name) {
+        static char name_buf[256];
+        sprintf(name_buf, u8"'%s'", name);
+        VALUE v = rb_eval_cstring(name_buf);
+        return rb_funcall2(obj, rb_intern("instance_eval"), 1, &v);
+    }
+
+    void LoadLibScript(const char *path) {
+        char tmp[15+MAX_PATH];
+        sprintf(tmp, u8"require 'lib/%s'", path);
+        rb_eval_string_protect(tmp, nullptr);
     }
 }

@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "RGSSRuntimePlugin.h"
 #include "RubySupport.h"
+#include "RGSSBitmap.h"
+#include "RGSSGraphics.h"
 
 PluginData gPluginData;
 
@@ -15,6 +17,7 @@ extern "C" {
     }
 
     RGSSRUNTIMEPLUGIN_API void ApplyPlugin() {
-        puts("233");        
+        RGSS::Graphics::InitGraphics();     //1
+        RGSS::Bitmap::InitBitmap();         //2
     }
 }

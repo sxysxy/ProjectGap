@@ -128,7 +128,7 @@ void RGSSPlayer::LoadRGSS() {
 }
 
 void RGSSPlayer::InitD3DContext() {
-    renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+    renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC);
                                             //硬件加速，可以渲染贴图
     if (!renderer) {
         MessageBoxError(hWnd, szTitle, L"初始化D3D⑨渲染器失败，程序终止！");
@@ -151,7 +151,6 @@ void RGSSPlayer::LoadPlugin() {
     data.GraphicsInformation.window = window;
     data.GraphicsInformation.hWnd = hWnd;
     data.hRGSSCore = hRGSSCore;
-    data.RGSSEval = lpfnRGSSEval;
 
     lpfnInitPlugin InitPlugin = (lpfnInitPlugin)GetProcAddress(hPlugin, "InitPlugin");
     if (!InitPlugin) {

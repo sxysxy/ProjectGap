@@ -74,11 +74,13 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir);$(SolutionDir)\SDL2\include;</IncludePath>
     <OutDir>$(SolutionDir)RGSSLoader\lib</OutDir>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(SolutionDir)\SDL2\lib\x86;</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)RGSSLoader\lib</OutDir>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir);$(SolutionDir)\SDL2\include;</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(SolutionDir)\SDL2\lib\x86;</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -140,6 +142,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="RGSSBitmap.h" />
+    <ClInclude Include="RGSSGraphics.h" />
     <ClInclude Include="RGSSRuntimePlugin.h" />
     <ClInclude Include="RubySupport.h" />
     <ClInclude Include="stdafx.h" />
@@ -160,6 +163,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="RGSSBitmap.cpp" />
+    <ClCompile Include="RGSSGraphics.cpp" />
     <ClCompile Include="RGSSRuntimePlugin.cpp" />
     <ClCompile Include="RubySupport.cpp" />
     <ClCompile Include="stdafx.cpp">

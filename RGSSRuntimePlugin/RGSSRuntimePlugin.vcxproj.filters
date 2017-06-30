@@ -27,6 +27,9 @@
     <ClInclude Include="RGSSBitmap.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="RGSSGraphics.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -42,6 +45,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RGSSBitmap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RGSSGraphics.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
