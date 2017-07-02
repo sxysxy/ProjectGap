@@ -14,6 +14,22 @@
 */
 
 namespace RGSS {
+
+    RColor RGSSColor2RColor(VALUE color) {
+        typedef unsigned char u8;
+        return RColor((u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("red"), 0, nullptr)),
+            (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("green"), 0, nullptr)),
+            (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("blue"), 0, nullptr)),
+            (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("alpha"), 0, nullptr)));
+    }
+    RRect RGSSRect2RRect(VALUE rect) {
+        return RRect(FIX2INT(rb_funcall2(rect, rb_intern("x"), 0, nullptr)),
+            FIX2INT(rb_funcall2(rect, rb_intern("y"), 0, nullptr)),
+            FIX2INT(rb_funcall2(rect, rb_intern("width"), 0, nullptr)),
+            FIX2INT(rb_funcall2(rect, rb_intern("height"), 0, nullptr)));
+    }
+
+
     namespace Bitmap {
 
         VALUE klass;  //Bitmap的魔改
@@ -21,21 +37,6 @@ namespace RGSS {
             SDL_Texture *texture;
             int width, height;
         };          //@bitmap_data会存入这个结构体的指针
-
-        RColor RGSSColor2RColor(VALUE color) {
-            typedef unsigned char u8;
-            return RColor((u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("red"), 0, nullptr)),
-                (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("green"), 0, nullptr)),
-                (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("blue"), 0, nullptr)),
-                (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("alpha"), 0, nullptr)));
-        }
-        RRect RGSSRect2RRect(VALUE rect) {
-            return RRect(FIX2INT(rb_funcall2(rect, rb_intern("x"), 0, nullptr)),
-                FIX2INT(rb_funcall2(rect, rb_intern("y"), 0, nullptr)),
-                FIX2INT(rb_funcall2(rect, rb_intern("width"), 0, nullptr)),
-                FIX2INT(rb_funcall2(rect, rb_intern("height"), 0, nullptr)));
-        }
-
         static BitmapData *__cdecl initialize(VALUE self) {  //初始化共用的部分
             BitmapData *p = (BitmapData *)malloc(sizeof(BitmapData));
             RtlZeroMemory(p, sizeof(BitmapData));
@@ -134,6 +135,61 @@ namespace RGSS {
             SDL_RenderCopy(Graphics::renderer, GetTexture(self), &srect, &drect);
             return Qnil;
         }
+        static VALUE __cdecl stretch_blt_opacity(VALUE self, VALUE dest_rect, VALUE src_bmp, VALUE src_rect, VALUE opacity) {
+            SDL_SetRenderTarget(Graphics::renderer, GetTexture(self));
+            SDL_Texture *tex = GetTexture(src_bmp);
+            SDL_SetTextureAlphaMod(tex, opacity);
+            SDL_RenderCopyEx(Graphics::renderer, tex, &RGSSRect2RRect(src_rect), &RGSSRect2RRect(dest_rect),
+                                0, nullptr, SDL_FLIP_NONE);
+            SDL_SetTextureAlphaMod(tex, 255);
+            return Qnil;
+        }
+        static VALUE __cdecl stretch_blt(VALUE self, VALUE dest_rect, VALUE src_bmp, VALUE src_rect) {
+            return stretch_blt_opacity(self, dest_rect, src_bmp, src_rect, 255);
+        }
+        static VALUE __cdecl blt_opacity(VALUE self, VALUE x, VALUE y, VALUE src_bmp, VALUE src_rect, VALUE opacity) {
+            char code[256];
+            sprintf(code, "Rect.new(%d,%d,%d,%d)", FIX2INT(x), FIX2INT(y), 
+                    FIX2INT(rb_funcall2(src_rect, rb_intern("width"), 0, nullptr)),
+                    FIX2INT(rb_funcall2(src_rect, rb_intern("height"), 0, nullptr)));
+            return stretch_blt_opacity(self, rb_eval_cstring(code), src_bmp, src_rect, opacity);
+        }
+        static VALUE __cdecl blt(VALUE self, VALUE x, VALUE y, VALUE src_bmp, VALUE src_rect) {
+            return blt_opacity(self, x, y, src_bmp, src_rect, 255);
+        }
+        static VALUE __cdecl clear(VALUE self) {
+            SDL_SetRenderDrawColor(Graphics::renderer, 0, 0, 0, 0);             //
+            SDL_RenderClear(Graphics::renderer);
+            return Qnil;
+        }
+        static VALUE __cdecl clear_rect1(VALUE self, VALUE rect) {
+            SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_NONE);  //覆盖模式
+            fill_rect(&RGSSRect2RRect(rect), RColor(0));
+            SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND); //切换回合成模式 
+            return Qnil;
+        }
+        static VALUE __cdecl clear_rect2(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h) {
+            SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_NONE);  //覆盖模式
+            fill_rect(&RRect(FIX2INT(x), FIX2INT(y), FIX2INT(w), FIX2INT(h)), RColor(0));
+            SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND); //切换回合成模式 
+            return Qnil;
+        }
+        static VALUE  __cdecl get_pixel(VALUE self, VALUE x, VALUE y) {
+            SDL_SetRenderTarget(Graphics::renderer, GetTexture(self));
+            RColor t = 0;
+            SDL_RenderReadPixels(Graphics::renderer, &RRect(FIX2INT(x), FIX2INT(y), 1, 1), 0, &t.color, 1);
+            char buf[100];
+            sprintf(buf, "Color.new(%d,%d,%d,%d)", t.rgba.r, t.rgba.g, t.rgba.b, t.rgba.a);
+            return rb_eval_cstring(buf);
+        }
+        static VALUE __cdecl set_pixel(VALUE self, VALUE x, VALUE y, VALUE color) {
+            fill_rect(&RRect(FIX2INT(x), FIX2INT(y), 1, 1), RGSSColor2RColor(color));
+            return Qnil;
+        }
+        static VALUE __cdecl hue_change(VALUE self, VALUE d) {
+            return self;
+        }
+
         void InitBitmap() {
             klass = rb_eval_string_protect(u8"Bitmap", nullptr);
 
@@ -159,7 +215,22 @@ namespace RGSS {
             rb_define_method(klass, "__fill_rect_2args", fill_rect2, 2);
             rb_define_method(klass, "__fill_rect_5args", fill_rect1, 5);
 
-            //test_method
+            //clear
+            rb_define_method(klass, "clear", clear, 0);
+            rb_define_method(klass, "__clear_rect_1args", clear_rect1, 1);
+            rb_define_method(klass, "__clear_rect_4args", clear_rect2, 4);
+
+            //pixel
+            rb_define_method(klass, "set_pixel", set_pixel, 3);
+            rb_define_method(klass, "get_pixel", get_pixel, 2);
+
+            //blt
+            rb_define_method(klass, "__blt_4args", blt, 4);
+            rb_define_method(klass, "__blt_5args", blt_opacity, 5);
+            rb_define_method(klass, "__stretch_blt_3args", stretch_blt, 3);
+            rb_define_method(klass, "__stretch_blt_4args", stretch_blt_opacity, 4);
+
+            //test_method, only for test Bitmap functions, in rgss please use Sprite to make Bitmap shown on the screen.
             rb_define_method(klass, "show_on_screen", show_on_screen, 2);
         }
         

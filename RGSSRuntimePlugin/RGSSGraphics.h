@@ -10,7 +10,7 @@ namespace RGSS {
     namespace Graphics {
         extern "C" {
             //
-            struct GraphicsData{
+            struct tagGraphicsData{
                 bool freeze;
                 int frame_count;
                 bool show_fps;
@@ -18,6 +18,7 @@ namespace RGSS {
 
             extern SDL_Renderer *renderer;
             extern VALUE klass;
+            extern tagGraphicsData GraphicsData;
 
             void InitGraphics();
         }
