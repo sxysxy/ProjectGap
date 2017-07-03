@@ -1,7 +1,12 @@
-Win32API.new("lib/RGSSRuntimePlugin.dll", "ApplyPlugin", "", "").call
+﻿Win32API.new("lib/RGSSRuntimePlugin.dll", "ApplyPlugin", "", "").call
+Font.default_name = "simhei.ttf"
 
 t = Bitmap.new(544, 416)
 t.fill_rect(0, 0, 544, 416, Color.new(0, 255, 0))
+
+t.font.color = Color.new(0, 0, 0, 255);
+t.font.strike_through = true
+t.draw_text(100, 100, 400, 100, "当然是原谅啊")
 
 loop do
   Input.update

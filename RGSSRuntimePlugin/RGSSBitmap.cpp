@@ -94,9 +94,10 @@ namespace RGSS {
     namespace Bitmap {
 
         VALUE klass;  //Bitmap的魔改
+        VALUE klass_font;
+
         struct BitmapData {  //Bitmap数据包
             SDL_Texture *texture;
-        //    SDL_Texture *origin;        //hue_change里面才会用到，未经hue_change处理的图...
             int width, height;
         };          //@bitmap_data会存入这个结构体的指针
         static BitmapData *__cdecl initialize(VALUE self) {  //初始化共用的部分
@@ -143,6 +144,7 @@ namespace RGSS {
             return p->texture?Qtrue:Qfalse;
         }
         inline BitmapData *GetData(VALUE self) {
+            //VALUE p = rb_funcall2(self, rb_intern("bitmap_data"), 0, nullptr);  //No method error?
             VALUE p = rb_iv_get(self, "@bitmap_data");
             return p == Qnil ? nullptr : (BitmapData *)FIX2INT(p);
         }
@@ -159,6 +161,7 @@ namespace RGSS {
             SDL_DestroyTexture(p->texture);
             free(p);
             rb_iv_set(self, "@__disposed", Qtrue);
+            rb_iv_set(self, "@bitmap_data", INT2FIX(0));
             return Qnil;
         }
         static VALUE __cdecl get_texture(VALUE self) { //注：这个是给ruby层面用的
@@ -346,8 +349,132 @@ namespace RGSS {
             return ary;
         }
 
+        //Font
+        struct FontData{
+            int size;
+            TTF_Font *font;
+            unsigned style;
+        };
+        static inline FontData *GetFontData(VALUE obj) {
+            //VALUE v = rb_funcall2(obj, rb_intern("font_data"), 0, nullptr);
+            VALUE v = rb_iv_get(obj, "@font_data");
+            return v == Qnil ? nullptr : (FontData*)FIX2INT(v);
+        }
+        static VALUE __cdecl set_bold(VALUE self) {
+            FontData *d = GetFontData(self);
+            VALUE bold = rb_funcall2(self, rb_intern("bold"), 0, nullptr);
+            if (!d || !d->font)return bold;
+            if (bold == Qtrue) {
+                d->style |= TTF_STYLE_BOLD;
+            }else {
+                d->style &= (~TTF_STYLE_BOLD);
+            }
+            TTF_SetFontStyle(d->font, d->style);
+            return bold;
+        }
+        static VALUE __cdecl set_italic(VALUE self) {
+            FontData *d = GetFontData(self);
+            VALUE italic = rb_funcall2(self, rb_intern("italic"), 0, nullptr);
+            if (!d || !d->font)return italic;
+            if (italic == Qtrue) {
+                d->style |= TTF_STYLE_ITALIC;
+            }
+            else {
+                d->style &= (~TTF_STYLE_ITALIC);
+            }
+            TTF_SetFontStyle(d->font, d->style);
+            return italic;
+        }
+        static VALUE __cdecl set_underline(VALUE self) {
+            FontData *d = GetFontData(self);
+            VALUE underline = rb_funcall2(self, rb_intern("underline"), 0, nullptr);
+            if (!d || !d->font)return underline;
+            if (underline == Qtrue) {
+                d->style |= TTF_STYLE_UNDERLINE;
+            }
+            else {
+                d->style &= (~TTF_STYLE_UNDERLINE);
+            }
+            TTF_SetFontStyle(d->font, d->style);
+            return underline;
+        }
+        static VALUE __cdecl set_strike_through(VALUE self) {
+            FontData *d = GetFontData(self);
+            VALUE strike_through = rb_funcall2(self, rb_intern("strike_through"), 0, nullptr);
+            if (!d || !d->font)return strike_through;
+            if (strike_through == Qtrue) {
+                d->style |= TTF_STYLE_STRIKETHROUGH;
+            }
+            else {
+                d->style &= (~TTF_STYLE_STRIKETHROUGH);
+            }
+            TTF_SetFontStyle(d->font, d->style);
+            return strike_through;
+        }
+        static VALUE __cdecl apply_default(VALUE self, VALUE name) {
+            FontData *d = new FontData;
+            RtlZeroMemory(d, sizeof(FontData));
+            d->size = 24;
+           // d->style = TTF_STYLE_NORMAL; //0
+
+            d->font = TTF_OpenFont(RSTRING_PTR(name), 24);
+            if(!d->font)puts(SDL_GetError());
+
+            rb_iv_set(self, "@font_data", INT2FIX((long)d));
+            return self;
+        }
+        static VALUE __cdecl set_size(VALUE self) {
+            FontData *d = GetFontData(self);
+            if(!d)return Qnil;
+            d->size = FIX2INT(rb_funcall2(self, rb_intern("size"), 0, nullptr));
+            TTF_CloseFont(d->font);
+            d->font = TTF_OpenFont(RSTRING_PTR(rb_funcall2(self, rb_intern("font_name"), 0, nullptr)), d->size);
+            return INT2FIX(d->size);
+        }
+        static VALUE __cdecl dispose_font(VALUE self) {
+            FontData *d = GetFontData(self);
+            if (d) {
+                TTF_CloseFont(d->font);
+                d->font = nullptr;
+            }
+            rb_iv_set(self, "@font_data", INT2FIX(0));
+            return Qnil;
+        }
+
+        //draw_text系列
+        static void __cdecl draw_text(SDL_Texture *tex, TTF_Font *font, const char *str, RColor color, int x, int y, int w, int h, int align) {
+            if(!font)return;
+            SDL_Surface *suf = TTF_RenderUTF8_Solid(font, str, SDL_Color{color.rgba.r, color.rgba.g, color.rgba.b, color.rgba.a});
+            SDL_Texture *ftex = SDL_CreateTextureFromSurface(Graphics::renderer, suf);
+            SDL_SetRenderTarget(Graphics::renderer, tex);
+            SDL_RenderCopy(Graphics::renderer, ftex, nullptr, &RRect(x, y, w, h));   
+            SDL_DestroyTexture(ftex);
+            SDL_FreeSurface(suf);
+        }
+        static VALUE __cdecl draw_text1(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h, VALUE str, VALUE align) {
+            VALUE font = rb_funcall2(self, rb_intern("font"), 0, nullptr);
+            draw_text(GetTexture(self), GetFontData(font)->font,
+                RSTRING_PTR(str), RGSSColor2RColor(rb_funcall2(font, rb_intern("color"), 0, nullptr)),
+                FIX2INT(x), FIX2INT(y), FIX2INT(w), FIX2INT(h), FIX2INT(align));
+            return Qnil;
+        }
+        static VALUE __cdecl draw_text2(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h, VALUE str) {
+            return draw_text1(self, x, y, w, h, str, 0);
+        }
+        static VALUE __cdecl draw_text3(VALUE self, VALUE rect, VALUE str, VALUE align) {
+            RRect r = RGSSRect2RRect(rect);
+            VALUE font = rb_funcall2(self, rb_intern("font"), 0, nullptr);
+            draw_text(GetTexture(self), GetFontData(font)->font, 
+                RSTRING_PTR(str), RGSSColor2RColor(rb_funcall2(font, rb_intern("color"), 0, nullptr)),
+                r.x, r.y, r.w, r.h, FIX2INT(align));
+            return Qnil;
+        }
+        static VALUE __cdecl draw_text4(VALUE self, VALUE rect, VALUE str) {
+            return draw_text3(self, rect, str, 0);
+        }
         void InitBitmap() {
             klass = rb_eval_string_protect(u8"Bitmap", nullptr);
+            klass_font = rb_eval_cstring("Font");
 
             //加载扩展脚本
             LoadLibScript("Bitmap.rb");
@@ -395,6 +522,26 @@ namespace RGSS {
 
             //get all pixels,returns a ruby Array
             rb_define_method(klass, "get_all_pixels", get_all_pixels, 0);
+            
+            //字体
+            if (TTF_Init() < 0) 
+                MessageBoxW(gPluginData.GraphicsInformation.hWnd, L"初始化True Type Font引擎失败，程序已终止！", L"错误", MB_ICONERROR);
+            
+            rb_define_method(klass_font, "__set_bold", set_bold, 0);
+            rb_define_method(klass_font, "__set_italic", set_italic, 0);
+            rb_define_method(klass_font, "__set_underline", set_underline, 0);
+            rb_define_method(klass_font, "__set_strike_through", set_strike_through, 0);
+            rb_define_method(klass_font, "__apply_default", apply_default, 1);
+            rb_define_method(klass_font, "__set_size", set_size, 0);
+            //rb_define_method(klass_font, "__set_outline", set_outline, 0);
+            rb_define_method(klass_font, "dispose", dispose_font, 0);
+            
+            //draw_text
+            rb_define_method(klass, "__draw_text_6args", draw_text1, 6);
+            rb_define_method(klass, "__draw_text_5args", draw_text2, 5);
+            rb_define_method(klass, "__draw_text_3args", draw_text3,3);
+            rb_define_method(klass, "__draw_text_2args", draw_text4, 2);
+            
         }
         
     }

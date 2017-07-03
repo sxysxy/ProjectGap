@@ -4,6 +4,7 @@
 #include "RGSSGraphics.h"
 #include "RubySupport.h"
 #include "RGSSRuntimePlugin.h"
+#include <vector>
 using namespace Ruby;
 
 namespace RGSS {
@@ -16,6 +17,7 @@ namespace RGSS {
                 bool show_fps;
 
                 int brightness;
+                std::vector<VALUE> sprites;
             };
 
             extern SDL_Renderer *renderer;

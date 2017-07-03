@@ -1,11 +1,13 @@
-#Bitmap的重新实现
+﻿#Bitmap的重新实现, Font的小修改
 #   by HfCloud. 
-#   reop: https://github.com/sxysxy/ProjectGap
+#   repo: https://github.com/sxysxy/ProjectGap
 
 class Bitmap
   #这里展示了已经实现的接口。
   #对于RGSSVA文档里面已经有的不再复述
 
+  attr_reader :bitmap_data  #底层相关的数据 为啥rb_funcall的时候说no method error口牙
+  
   #初始化Bitmap对象
   def initialize(*arg)
     @bitmap_data = nil
@@ -17,7 +19,9 @@ class Bitmap
     else
       raise ArgumentError, "Bitmap.new requests 1..2 arguments"
     end
-    (raise RGSSError, "Fail To Create Bitmap") if !__get_texture
+    (raise RGSSError, "Fail To Create Bitmap") if !__get_texture #检查位图是否创建成功
+    
+    self.font = Font.new #生成字体
   end 
   
   #fill_rect的前台。类似的，由于可变参方法的存在，我们做了几个这样的参数个数判断的处理
@@ -43,6 +47,7 @@ class Bitmap
     end
   end
   
+  
   #渲染速度超级快
   def stretch_blt(*arg)
     if arg.size == 3
@@ -62,6 +67,27 @@ class Bitmap
       __clear_rect_4args(*arg)
     else
       raise ArgumentError, "Bitmap#clear_rect requests 1 or 4 arguments" 
+    end
+  end
+  
+  def font
+    return @font
+  end
+  def font=(f)  #绕过预置Bitmap的disposed bitmap检查
+    @font = f
+  end
+  
+  def draw_text(*arg)
+    if arg.size == 2
+      __draw_text_2args(*arg)
+    elsif arg.size == 3
+      __draw_text_3args(*arg)
+    elsif arg.size == 5
+      __draw_text_5args(*arg)
+    elsif arg.size == 6
+      __draw_text_6args(*arg)
+    else
+      raise ArgumentError, "Bitmap#clear_rect requests 2..3 or 5..6 arguments" 
     end
   end
   
@@ -90,10 +116,6 @@ class Bitmap
     #方法：在场景的update里面调用这个show_on_screen方法即可
   end
 =end
-
-  #未实现的
-  def draw_text(*arg)  #很快就去实现w
-  end
   
   #blur系列，感觉没啥用，我不想写了quq..
   def blur
@@ -103,6 +125,61 @@ class Bitmap
   
   def gradient_fill_rect(*arg) #渐变色填充矩形，要我说，干脆提前在PS里面画好渐变色好了= =
                                 #这个没想到怎么硬件渲染，会很慢
+  end
+  
+end
+
+class Font
+  attr_reader :strike_through  #是否有删除线(true/false)
+  attr_reader :underline       #是否有下划线(true/false)
+  
+  attr_reader :font_data     #底层相关的数据
+  attr_reader :font_name     #最终选用的名字
+  
+  def strike_through=(b)
+    @strike_through = b
+    __set_strike_through
+  end
+  
+  def underline=(b)
+    @underline = b
+    __set_underline
+  end
+  
+  alias :__set_bold__ :bold=
+  def bold=(b)
+    __set_bold__(b)
+    __set_bold
+  end
+  
+  alias :__set_italic__ :italic=
+  def italic=(b)
+    __set_italic__(b)
+    __set_italic
+  end
+  
+  alias __set_size__ :size=
+  def size=(s)
+    __set_size__(s)
+    __set_size
+  end
+
+  alias :__init :initialize 
+  def initialize(*arg)
+    __init(*arg)
+    if self.name.is_a?(String)
+      __apply_default(@font_name = "Fonts/#{self.name}")
+    elsif self.name.is_a?(Array)
+      self.name.each do |e|
+        t = "Fonts/#{e}"
+        if File.exits?(t)
+          @font_name = t
+          __apply_default(e)
+          break
+        end
+      end
+      #-
+    end
   end
   
 end
