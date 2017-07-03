@@ -144,6 +144,7 @@
     <ClInclude Include="RGSSBitmap.h" />
     <ClInclude Include="RGSSGraphics.h" />
     <ClInclude Include="RGSSRuntimePlugin.h" />
+    <ClInclude Include="RGSSSprite.h" />
     <ClInclude Include="RubySupport.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
@@ -165,6 +166,7 @@
     <ClCompile Include="RGSSBitmap.cpp" />
     <ClCompile Include="RGSSGraphics.cpp" />
     <ClCompile Include="RGSSRuntimePlugin.cpp" />
+    <ClCompile Include="RGSSSprite.cpp" />
     <ClCompile Include="RubySupport.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

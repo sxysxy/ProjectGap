@@ -6,6 +6,7 @@
 #include "RubySupport.h"
 #include "RGSSBitmap.h"
 #include "RGSSGraphics.h"
+#include "RGSSSprite.h"
 
 PluginData gPluginData;
 
@@ -19,5 +20,6 @@ extern "C" {
     RGSSRUNTIMEPLUGIN_API void ApplyPlugin() {
         RGSS::Graphics::InitGraphics();     //1
         RGSS::Bitmap::InitBitmap();         //2
+        RGSS::Sprite::InitSprite();         //3
     }
 }

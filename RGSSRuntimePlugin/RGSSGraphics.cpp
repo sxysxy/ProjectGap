@@ -28,6 +28,16 @@ namespace RGSS {
         static VALUE __cdecl frame_count(VALUE self) {
             return INT2FIX(GraphicsData.frame_count);
         }
+        static VALUE __cdecl frame_rate(VALUE self) {
+            return INT2FIX(60);
+        }
+        static VALUE __cdecl get_brightness(VALUE self) {
+            return INT2FIX(GraphicsData.brightness);
+        }
+        static VALUE __cdecl set_brightness(VALUE self, VALUE v) {
+            GraphicsData.brightness = FIX2INT(v);
+            return v;
+        }
         void InitGraphics() {
           //  puts("Plugin InitGraphics");
 
@@ -36,6 +46,10 @@ namespace RGSS {
             rb_define_module_function(klass, "update", update, 0);
             rb_define_module_function(klass, "clear", clear, 0);
             rb_define_module_function(klass, "frame_count", frame_count, 0);
+            rb_define_module_function(klass, "brightness", get_brightness, 0);
+            rb_define_module_function(klass, "brightness=", set_brightness, 0);
+
+
         }
     }
 }

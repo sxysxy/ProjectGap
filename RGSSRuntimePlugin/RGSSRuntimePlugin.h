@@ -24,11 +24,23 @@ struct RRect : public SDL_Rect {
 struct RColor {
     union {
         struct {
-            unsigned char r,g,b,a;
+            unsigned char r:8;
+            unsigned char g:8;
+            unsigned char b:8;
+            unsigned char a:8;
         }rgba;
         struct {
-            unsigned char h,s,l,a;
-        }hsla;
+            unsigned char a : 8;
+            unsigned char b : 8;
+            unsigned char g : 8;
+            unsigned char r : 8;
+        }abgr; 
+        struct {
+            unsigned char a : 8;
+            unsigned char r : 8;
+            unsigned char g : 8;
+            unsigned char b : 8;
+        }argb;
         unsigned int color;
     };
     RColor(const unsigned int c = 0){color = c;}

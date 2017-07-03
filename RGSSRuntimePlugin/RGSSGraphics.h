@@ -14,6 +14,8 @@ namespace RGSS {
                 bool freeze;
                 int frame_count;
                 bool show_fps;
+
+                int brightness;
             };
 
             extern SDL_Renderer *renderer;
