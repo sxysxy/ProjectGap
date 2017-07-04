@@ -13,9 +13,24 @@ namespace RGSS {
     namespace Bitmap {
 
         //
-        
+        struct BitmapData {  //Bitmap数据包
+            SDL_Texture *texture;
+            int width, height;
+            bool dirty;
+            RColor *pixels;
+        };          //@bitmap_data会存入这个结构体的指针
+
         extern VALUE klass;
         void InitBitmap();
-   
+        
+        inline BitmapData *GetData(VALUE self) {
+            VALUE p = rb_funcall2(self, rb_intern("bitmap_data"), 0, nullptr);
+            //VALUE p = rb_iv_get(self, "@bitmap_data");
+            return p == Qnil ? nullptr : (BitmapData *)FIX2INT(p);
+        }
+        inline SDL_Texture *GetTexture(VALUE self) {
+            BitmapData *p = GetData(self);
+            return p ? p->texture : nullptr;
+        }
     }
 }

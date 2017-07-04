@@ -15,6 +15,22 @@ extern "C" {
         Ruby::InitRuntime(data->hRGSSCore);
         Ruby::rb_cObject = Ruby::rb_eval_string_protect(u8"Object", nullptr);
         memcpy(&gPluginData, data, sizeof(PluginData));
+
+        //get_rtp
+        HKEY hKey = nullptr;
+        wchar_t szBuffer1[MAX_PATH];
+        DWORD a = 0, b = MAX_PATH-1;
+        RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Enterbrain\\RGSS3\\RTP", 0, KEY_READ, &hKey);
+        RegQueryValueExW(hKey, gPluginData.szRTPName, nullptr, &a, (LPBYTE)szBuffer1, &b);
+        for (int i = 0; szBuffer1[i]; i++) 
+            if(szBuffer1[i] == L'\\')szBuffer1[i] = L'/';
+
+        //把Unicode转换成游戏用的UTF8编码
+        int len = WideCharToMultiByte(CP_UTF8, 0, szBuffer1, -1, nullptr, 0, nullptr, nullptr);
+        WideCharToMultiByte(CP_UTF8, 0, szBuffer1, -1, gPluginData.RTPPath, len, nullptr, nullptr);
+
+        RegCloseKey(hKey);
+        
     }
 
     RGSSRUNTIMEPLUGIN_API void ApplyPlugin() {

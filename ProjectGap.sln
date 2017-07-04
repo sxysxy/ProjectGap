@@ -7,6 +7,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGSSLoader", "RGSSLoader\RG
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGSSRuntimePlugin", "RGSSRuntimePlugin\RGSSRuntimePlugin.vcxproj", "{1D9F305E-52A3-4629-856E-3F0B8302D9F8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{1F914BB4-F6CA-479C-88AB-19706E509D26}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{9D18F119-948B-4A43-ABD3-09BEA8B15A6B}"
+	ProjectSection(SolutionItems) = preProject
+		Common\include\GraphicsInfo.h = Common\include\GraphicsInfo.h
+		Common\include\PluginData.h = Common\include\PluginData.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -34,5 +42,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9D18F119-948B-4A43-ABD3-09BEA8B15A6B} = {1F914BB4-F6CA-479C-88AB-19706E509D26}
 	EndGlobalSection
 EndGlobal

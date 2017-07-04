@@ -2,6 +2,8 @@
 #include "RGSSGraphics.h"
 #include "RubySupport.h"
 #include "RGSSRuntimePlugin.h"
+#include <algorithm>
+#include <functional>
 
 namespace RGSS {
     namespace Graphics {
@@ -10,15 +12,30 @@ namespace RGSS {
         tagGraphicsData GraphicsData;
 
         static VALUE __cdecl update(VALUE self) {
+            for (auto it = GraphicsData.tasks.begin(); it != GraphicsData.tasks.end(); ){
+                if ((*it)->IsValid()) {
+                    (*it)->render();
+                    ++it;
+                }else {
+                    auto p = it;
+                    delete (*it);
+                    ++it;
+                    GraphicsData.tasks.erase(p);
+                }
+            }
+            
             SDL_SetRenderTarget(renderer, nullptr);
             if (!GraphicsData.freeze) {
                 SDL_RenderPresent(renderer);
-                GraphicsData.frame_count++;
-                if (GraphicsData.frame_count == 60 && GraphicsData.show_fps) {
-                    //用于显示fps的代码
-                }
+               
+            }else {
+                //用于执行渐变的代码
             }
-            return self;
+            GraphicsData.frame_count++;
+            if (GraphicsData.frame_count == 60 && GraphicsData.show_fps) {
+                //用于显示fps的代码
+            }
+            return Qnil;
         }
         static VALUE __cdecl clear(VALUE self) {
             SDL_SetRenderTarget(renderer, nullptr);
@@ -38,6 +55,14 @@ namespace RGSS {
             GraphicsData.brightness = FIX2INT(v);
             return v;
         }
+        static VALUE __cdecl frame_reset(VALUE self) {
+            return Qnil;
+        }
+        static VALUE __cdecl freeze(VALUE self) {
+            GraphicsData.freeze = true;
+            return Qnil;
+        }
+        
         void InitGraphics() {
           //  puts("Plugin InitGraphics");
 
@@ -48,8 +73,8 @@ namespace RGSS {
             rb_define_module_function(klass, "frame_count", frame_count, 0);
             rb_define_module_function(klass, "brightness", get_brightness, 0);
             rb_define_module_function(klass, "brightness=", set_brightness, 0);
-
-
+            rb_define_module_function(klass, "frame_reset", frame_reset, 0);
+            rb_define_module_function(klass, "freeze", freeze, 0);
         }
     }
 }

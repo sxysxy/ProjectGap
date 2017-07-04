@@ -25,10 +25,12 @@ void RGSSPlayer::LoadIniConfig() {
         GetPrivateProfileStringW(L"Game", L"Title", lpDefaultTitle, szTitle, MAX_PATH, szIniPath);
         GetPrivateProfileStringW(L"Game", L"Library", lpDefaultLibrary, szLibrary, MAX_PATH, szIniPath);
         GetPrivateProfileStringW(L"Game", L"Scripts", lpDefaultScripts, szScripts, MAX_PATH, szIniPath);
+        GetPrivateProfileStringW(L"Game", L"RTP", L"", szRTP, MAX_PATH, szIniPath);
     }else{
         wcscpy(szTitle, lpDefaultTitle);
         wcscpy(szLibrary, lpDefaultLibrary);
         wcscpy(szScripts, lpDefaultScripts);
+        wcscpy(szRTP, L"");
     }
 }
 
@@ -151,6 +153,7 @@ void RGSSPlayer::LoadPlugin() {
     data.GraphicsInformation.window = window;
     data.GraphicsInformation.hWnd = hWnd;
     data.hRGSSCore = hRGSSCore;
+    data.szRTPName = szRTP;
 
     lpfnInitPlugin InitPlugin = (lpfnInitPlugin)GetProcAddress(hPlugin, "InitPlugin");
     if (!InitPlugin) {

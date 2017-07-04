@@ -16,7 +16,7 @@ public:
     HWND hWnd;
     SDL_Window *window;
     wchar_t szAppPath[MAX_PATH], szIniPath[MAX_PATH], szRGSSADPath[MAX_PATH];
-    wchar_t szLibrary[MAX_PATH], szTitle[MAX_PATH], szScripts[MAX_PATH];
+    wchar_t szLibrary[MAX_PATH], szTitle[MAX_PATH], szScripts[MAX_PATH], szRTP[MAX_PATH];
     wchar_t *lpRGSSAD;
 
     int nArgc;

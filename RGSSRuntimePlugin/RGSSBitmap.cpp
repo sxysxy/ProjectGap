@@ -96,15 +96,13 @@ namespace RGSS {
         VALUE klass;  //Bitmap的魔改
         VALUE klass_font;
 
-        struct BitmapData {  //Bitmap数据包
-            SDL_Texture *texture;
-            int width, height;
-        };          //@bitmap_data会存入这个结构体的指针
+ 
         static BitmapData *__cdecl initialize(VALUE self) {  //初始化共用的部分
             BitmapData *p = (BitmapData *)malloc(sizeof(BitmapData));
             RtlZeroMemory(p, sizeof(BitmapData));
             rb_iv_set(self, "@bitmap_data", INT2FIX((long)p));
             rb_iv_set(self, "@__disposed", Qfalse);
+            p->dirty = true;  //没错，先设置为true;
             return p;
         }
         static VALUE __cdecl initialize_wh(VALUE self, VALUE w, VALUE h) {
@@ -115,6 +113,7 @@ namespace RGSS {
                 SDL_TEXTUREACCESS_TARGET, p->width, p->height);
             SDL_SetRenderTarget(Graphics::renderer, p->texture);
             SDL_RenderClear(Graphics::renderer);
+            p->pixels = (RColor *)malloc(p->width*p->height*4);
             return self;
         }
         static VALUE __cdecl initialize_path(VALUE self, VALUE path) {
@@ -127,7 +126,13 @@ namespace RGSS {
             if (inrgssad) { //加密档案中存在：
                 rwops = SDL_RWFromMem(pdata, len);
             }else {
-                rwops = SDL_RWFromFile(RSTRING_PTR(path), "r");
+                if(GetFileAttributesA(RSTRING_PTR(path)) != INVALID_FILE_ATTRIBUTES)
+                    rwops = SDL_RWFromFile(RSTRING_PTR(path), "r");
+                else { //从RTP里面找
+                    static char load[MAX_PATH];
+                    sprintf(load, "%s/%s", gPluginData.RTPPath, RSTRING_PTR(path));
+                    rwops = SDL_RWFromFile(load, "r");
+                }
             }
             SDL_Texture *t = IMG_LoadTexture_RW(Graphics::renderer, rwops, 0);
             SDL_QueryTexture(t, nullptr, nullptr, &p->width, &p->height);
@@ -140,24 +145,18 @@ namespace RGSS {
             //if(inrgssad)free(pdata);      //free?    
  
             SDL_QueryTexture(p->texture, nullptr, nullptr, &p->width, &p->height);
+            p->pixels = (RColor *)malloc(p->width*p->height * 4);
             
             return p->texture?Qtrue:Qfalse;
         }
-        inline BitmapData *GetData(VALUE self) {
-            //VALUE p = rb_funcall2(self, rb_intern("bitmap_data"), 0, nullptr);  //No method error?
-            VALUE p = rb_iv_get(self, "@bitmap_data");
-            return p == Qnil ? nullptr : (BitmapData *)FIX2INT(p);
-        }
-        inline SDL_Texture *GetTexture(VALUE self) {
-            BitmapData *p = GetData(self);
-            return p?p->texture : nullptr;
-        }
+     
         static VALUE __cdecl check_disposed(VALUE self) {
             return rb_iv_get(self, "@__disposed") != Qfalse;
         }
         static VALUE __cdecl dispose(VALUE self) {
             if(check_disposed(self))return Qnil;
             BitmapData *p = GetData(self);
+            free(p->pixels);
             SDL_DestroyTexture(p->texture);
             free(p);
             rb_iv_set(self, "@__disposed", Qtrue);
@@ -176,21 +175,21 @@ namespace RGSS {
             sprintf(buf, "Rect.new(0,0,%d,%d)", w, h);
             return rb_eval_cstring(buf);
         }
-        static void fill_rect(const RRect *rect, const RColor c) {
+        static void fill_rect(BitmapData *d, const RRect *rect, const RColor c) {
+            SDL_SetRenderTarget(Graphics::renderer, d->texture);  
             SDL_SetRenderDrawColor(Graphics::renderer, c.rgba.r, c.rgba.g, c.rgba.b, c.rgba.a);
             SDL_RenderFillRect(Graphics::renderer, rect);
             SDL_SetRenderDrawColor(Graphics::renderer, 0, 0, 0, 0);
+            d->dirty = true;
         }
         static VALUE __cdecl fill_rect1(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h, VALUE color) {
-            SDL_SetRenderTarget(Graphics::renderer, GetTexture(self));
             RRect rect(FIX2INT(x), FIX2INT(y), FIX2INT(w), FIX2INT(h));
             RColor c = RGSSColor2RColor(color);
-            fill_rect(&rect, c);
+            fill_rect(GetData(self), &rect, c);
             return Qnil;
         }
         static VALUE __cdecl fill_rect2(VALUE self, VALUE rect, VALUE color) {
-            SDL_SetRenderTarget(Graphics::renderer, GetTexture(self));
-            fill_rect(&RGSSRect2RRect(rect), RGSSColor2RColor(color));
+            fill_rect(GetData(self), &RGSSRect2RRect(rect), RGSSColor2RColor(color));
             return Qnil;
         }
         static VALUE __cdecl width(VALUE self) {
@@ -215,6 +214,7 @@ namespace RGSS {
             SDL_RenderCopyEx(Graphics::renderer, tex, &RGSSRect2RRect(src_rect), &RGSSRect2RRect(dest_rect),
                                 0, nullptr, SDL_FLIP_NONE);
             SDL_SetTextureAlphaMod(tex, 255);
+            GetData(self)->dirty = true;
             return Qnil;
         }
         static VALUE __cdecl stretch_blt(VALUE self, VALUE dest_rect, VALUE src_bmp, VALUE src_rect) {
@@ -232,31 +232,41 @@ namespace RGSS {
         }
         static VALUE __cdecl clear(VALUE self) {
             SDL_SetRenderDrawColor(Graphics::renderer, 0, 0, 0, 0);             //
+            BitmapData *d = GetData(self);
+            SDL_SetRenderTarget(Graphics::renderer, d->texture);
             SDL_RenderClear(Graphics::renderer);
+            d->dirty = true;
             return Qnil;
         }
         static VALUE __cdecl clear_rect1(VALUE self, VALUE rect) {
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_NONE);  //覆盖模式
-            fill_rect(&RGSSRect2RRect(rect), RColor(0));
+            fill_rect(GetData(self), &RGSSRect2RRect(rect), RColor(0));
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND); //切换回合成模式 
             return Qnil;
         }
         static VALUE __cdecl clear_rect2(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h) {
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_NONE);  //覆盖模式
-            fill_rect(&RRect(FIX2INT(x), FIX2INT(y), FIX2INT(w), FIX2INT(h)), RColor(0));
+            fill_rect(GetData(self), &RRect(FIX2INT(x), FIX2INT(y), FIX2INT(w), FIX2INT(h)), RColor(0));
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND); //切换回合成模式 
             return Qnil;
         }
+        inline static void update_pixels(BitmapData *d) {
+            if (d->dirty) {
+                SDL_SetRenderTarget(Graphics::renderer, d->texture);
+                SDL_RenderReadPixels(Graphics::renderer, nullptr, SDL_PIXELFORMAT_RGBA8888, d->pixels, d->width * 4);
+                d->dirty = false;
+            }
+        }
         static VALUE  __cdecl get_pixel(VALUE self, VALUE x, VALUE y) {
-            SDL_SetRenderTarget(Graphics::renderer, GetTexture(self));
-            RColor t = 0;
-            SDL_RenderReadPixels(Graphics::renderer, &RRect(FIX2INT(x), FIX2INT(y), 1, 1), 0, &t.color, 4);
+            BitmapData *d = GetData(self);
+            update_pixels(d);
+            RColor t = d->pixels[d->width*FIX2INT(y)+FIX2INT(x)];
             char buf[100];
             sprintf(buf, "Color.new(%d,%d,%d,%d)", t.rgba.r, t.rgba.g, t.rgba.b, t.rgba.a);
             return rb_eval_cstring(buf);
         }
         static VALUE __cdecl set_pixel(VALUE self, VALUE x, VALUE y, VALUE color) {
-            fill_rect(&RRect(FIX2INT(x), FIX2INT(y), 1, 1), RGSSColor2RColor(color));
+            fill_rect(GetData(self), &RRect(FIX2INT(x), FIX2INT(y), 1, 1), RGSSColor2RColor(color));
             return Qnil;
         }
         static VALUE __cdecl hue_change(VALUE self, VALUE hue) {
@@ -305,17 +315,13 @@ namespace RGSS {
             if (SDL_UpdateTexture(data->texture, nullptr, pixels, pitch) < 0) 
                 puts(SDL_GetError());
             free(pixels);
-            
+            data->dirty = true;
             return Qnil;
         }
         static VALUE get_all_pixels(VALUE self) {
             BitmapData *data = GetData(self);
-            SDL_SetRenderTarget(Graphics::renderer, data->texture);
             int w = data->width, h = data->height;
-
-            int pitch = SDL_BYTESPERPIXEL(SDL_PIXELFORMAT_ABGR8888)*w;  //w*4
-            RColor *pixels = (RColor *)malloc(pitch*h);
-            SDL_RenderReadPixels(Graphics::renderer, nullptr, SDL_PIXELFORMAT_ABGR8888, pixels, pitch);
+            update_pixels(data);
 
             VALUE kary = rb_eval_cstring("Array");
             VALUE size = INT2FIX(w*h);
@@ -327,12 +333,12 @@ namespace RGSS {
             VALUE tmp[4];
             VALUE col;
             const ID idnew = rb_intern("new"), idset = rb_intern("[]=");
-            for (RColor *p = pixels; p < pixels + length; p += 4) { 
+            for (RColor *p = data->pixels; p < data->pixels + length; p += 4) { 
 
             #define loop_expand(ptr) tmp[0] = INT2FIX(ptr->rgba.r);tmp[1] = INT2FIX(ptr->rgba.g); \
                                      tmp[2] = INT2FIX(ptr->rgba.b);tmp[3] = INT2FIX(ptr->rgba.a); \
                                      col = rb_funcall2(kcolor, idnew, 4, tmp); \
-                                     tmp[0] = INT2FIX(ptr-pixels), tmp[1] = col; \
+                                     tmp[0] = INT2FIX(ptr-data->pixels), tmp[1] = col; \
                                      rb_funcall2(ary, idset, 2, tmp);
 
                   loop_expand(p)
@@ -340,12 +346,11 @@ namespace RGSS {
                   loop_expand((p+2))
                   loop_expand((p+3))
             }
-            for (RColor *p = pixels + length; p < pixels + len; p++) {
+            for (RColor *p = data->pixels + length; p < data->pixels + len; p++) {
                 loop_expand(p);
                 #undef loop_expand
             }
 
-            free(pixels);
             return ary;
         }
 
@@ -356,8 +361,8 @@ namespace RGSS {
             unsigned style;
         };
         static inline FontData *GetFontData(VALUE obj) {
-            //VALUE v = rb_funcall2(obj, rb_intern("font_data"), 0, nullptr);
-            VALUE v = rb_iv_get(obj, "@font_data");
+            VALUE v = rb_funcall2(obj, rb_intern("font_data"), 0, nullptr);
+            //VALUE v = rb_iv_get(obj, "@font_data");
             return v == Qnil ? nullptr : (FontData*)FIX2INT(v);
         }
         static VALUE __cdecl set_bold(VALUE self) {
@@ -447,15 +452,19 @@ namespace RGSS {
             SDL_Surface *suf = TTF_RenderUTF8_Solid(font, str, SDL_Color{color.rgba.r, color.rgba.g, color.rgba.b, color.rgba.a});
             SDL_Texture *ftex = SDL_CreateTextureFromSurface(Graphics::renderer, suf);
             SDL_SetRenderTarget(Graphics::renderer, tex);
-            SDL_RenderCopy(Graphics::renderer, ftex, nullptr, &RRect(x, y, w, h));   
+            int real_w, real_h;
+            SDL_QueryTexture(ftex, nullptr, nullptr, &real_w, &real_h);
+            SDL_RenderCopy(Graphics::renderer, ftex, nullptr, &RRect(x, y, real_w, real_h));   
             SDL_DestroyTexture(ftex);
             SDL_FreeSurface(suf);
         }
         static VALUE __cdecl draw_text1(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h, VALUE str, VALUE align) {
+            BitmapData *d = GetData(self);
             VALUE font = rb_funcall2(self, rb_intern("font"), 0, nullptr);
-            draw_text(GetTexture(self), GetFontData(font)->font,
+            draw_text(d->texture, GetFontData(font)->font,
                 RSTRING_PTR(str), RGSSColor2RColor(rb_funcall2(font, rb_intern("color"), 0, nullptr)),
                 FIX2INT(x), FIX2INT(y), FIX2INT(w), FIX2INT(h), FIX2INT(align));
+            d->dirty = true;
             return Qnil;
         }
         static VALUE __cdecl draw_text2(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h, VALUE str) {
@@ -463,10 +472,12 @@ namespace RGSS {
         }
         static VALUE __cdecl draw_text3(VALUE self, VALUE rect, VALUE str, VALUE align) {
             RRect r = RGSSRect2RRect(rect);
+            BitmapData *d = GetData(self);
             VALUE font = rb_funcall2(self, rb_intern("font"), 0, nullptr);
-            draw_text(GetTexture(self), GetFontData(font)->font, 
+            draw_text(d->texture, GetFontData(font)->font, 
                 RSTRING_PTR(str), RGSSColor2RColor(rb_funcall2(font, rb_intern("color"), 0, nullptr)),
                 r.x, r.y, r.w, r.h, FIX2INT(align));
+            d->dirty = true;
             return Qnil;
         }
         static VALUE __cdecl draw_text4(VALUE self, VALUE rect, VALUE str) {
