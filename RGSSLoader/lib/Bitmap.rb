@@ -7,6 +7,7 @@ class Bitmap
   #对于RGSSVA文档里面已经有的不再复述
 
   attr_reader :bitmap_data  #底层相关的数据 为啥rb_funcall的时候说no method error口牙
+  attr_reader :filename
   
   #初始化Bitmap对象
   def initialize(*arg)
@@ -14,7 +15,7 @@ class Bitmap
     if arg.size == 2
       __init_wh(*arg)
     elsif arg.size == 1
-      (raise ArgumentError, "Invalid Argument") if(arg[0].class != String)
+      (raise ArgumentError, "Invalid Argument") if((@filename = arg[0]).class != String)
       __init_path(*arg)
     else
       raise ArgumentError, "Bitmap.new requests 1..2 arguments"
@@ -38,6 +39,7 @@ class Bitmap
   
   #渲染速度超级快
   def blt(*arg)
+    
     if(arg.size == 4)
       __blt_4args(*arg)
     elsif arg.size == 5
@@ -119,12 +121,14 @@ class Bitmap
   
   #blur系列，感觉没啥用，我不想写了quq..
   def blur
+    
   end
   def radial_blur(a, b)
   end
   
   def gradient_fill_rect(*arg) #渐变色填充矩形，要我说，干脆提前在PS里面画好渐变色好了= =
                                 #这个没想到怎么硬件渲染，会很慢
+      
   end
   
 end

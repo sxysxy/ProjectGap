@@ -30,6 +30,7 @@ namespace RGSS {
                 SDL_Point center = SDL_Point{ox, oy};
                 SDL_RendererFlip flip = (SDL_RendererFlip)(SDL_FLIP_HORIZONTAL*hmirror | SDL_FLIP_VERTICAL*vmirror);
                 SDL_SetRenderTarget(Graphics::renderer, nullptr);
+                SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND);
                 SDL_RenderCopyEx(Graphics::renderer, data->texture, &srcR, &destR, -angle, &center, flip);
             });
             return self;

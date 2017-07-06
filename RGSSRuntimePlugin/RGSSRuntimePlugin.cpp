@@ -39,3 +39,39 @@ extern "C" {
         RGSS::Sprite::InitSprite();         //3
     }
 }
+
+thread_local WIN32_FIND_DATAA FileFindData;
+thread_local char FileFindPath[MAX_PATH];
+char *GetFullFileName(const char *filename) {
+    sprintf(FileFindPath, "%s*", filename);
+    HANDLE h;
+    bool rtp = false;
+    char *pname;
+    if ((h = FindFirstFileA(FileFindPath, &FileFindData)) != INVALID_HANDLE_VALUE) 
+        pname = FileFindData.cFileName;
+    else { //Find in RTP
+        sprintf(FileFindPath, "%s/%s*", gPluginData.RTPPath, filename);
+        if ((h = FindFirstFileA(FileFindPath, &FileFindData)) != INVALID_HANDLE_VALUE) {
+            pname = FileFindData.cFileName;
+            rtp = true;
+        }else
+            return nullptr;
+    }
+    int px;
+    for(px = 0; FileFindPath[px] != '.' && FileFindPath[px] != '*'; px++);
+    if (FileFindPath[px] == '.') {
+        if(rtp)sprintf(FileFindPath, "%s/%s", gPluginData.RTPPath, filename);
+        else strcpy(FileFindPath, filename);
+    }
+    else if (FileFindPath[px] == '*') {
+        int len = strlen(FileFindPath);
+        for (--len; ~len; len--) {
+            if ((FileFindPath[len] == '/' || FileFindPath[len] == '\\')) {
+                FileFindPath[len+1] = 0;
+                break;
+            }
+        }
+        strcat(FileFindPath, FileFindData.cFileName);
+    }
+    return FileFindPath;
+}

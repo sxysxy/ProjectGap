@@ -37,10 +37,9 @@ class Sprite
     @bitmap = bmp
   end
   attr_accessor :visible
-  attr_accessor :x, :y, :ox, :oy, :zoom_x, :zoom_y
+  attr_accessor :x, :y, :z, :ox, :oy, :zoom_x, :zoom_y
   attr_accessor :angle
   attr_accessor :mirror, :vmirror
-  
   
   #attr_accessor :angle, :mirror  
   def dispose

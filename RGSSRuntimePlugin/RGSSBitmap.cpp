@@ -113,6 +113,7 @@ namespace RGSS {
                 SDL_TEXTUREACCESS_TARGET, p->width, p->height);
             SDL_SetRenderTarget(Graphics::renderer, p->texture);
             SDL_RenderClear(Graphics::renderer);
+            SDL_SetTextureBlendMode(p->texture, SDL_BLENDMODE_BLEND);
             p->pixels = (RColor *)malloc(p->width*p->height*4);
             return self;
         }
@@ -126,13 +127,8 @@ namespace RGSS {
             if (inrgssad) { //加密档案中存在：
                 rwops = SDL_RWFromMem(pdata, len);
             }else {
-                if(GetFileAttributesA(RSTRING_PTR(path)) != INVALID_FILE_ATTRIBUTES)
-                    rwops = SDL_RWFromFile(RSTRING_PTR(path), "r");
-                else { //从RTP里面找
-                    static char load[MAX_PATH];
-                    sprintf(load, "%s/%s", gPluginData.RTPPath, RSTRING_PTR(path));
-                    rwops = SDL_RWFromFile(load, "r");
-                }
+                char *filename = GetFullFileName(RSTRING_PTR(path));
+                rwops = SDL_RWFromFile(filename, "rb");
             }
             SDL_Texture *t = IMG_LoadTexture_RW(Graphics::renderer, rwops, 0);
             SDL_QueryTexture(t, nullptr, nullptr, &p->width, &p->height);
@@ -146,6 +142,7 @@ namespace RGSS {
  
             SDL_QueryTexture(p->texture, nullptr, nullptr, &p->width, &p->height);
             p->pixels = (RColor *)malloc(p->width*p->height * 4);
+            SDL_SetTextureBlendMode(p->texture, SDL_BLENDMODE_BLEND);
             
             return p->texture?Qtrue:Qfalse;
         }
@@ -454,7 +451,10 @@ namespace RGSS {
             SDL_SetRenderTarget(Graphics::renderer, tex);
             int real_w, real_h;
             SDL_QueryTexture(ftex, nullptr, nullptr, &real_w, &real_h);
-            SDL_RenderCopy(Graphics::renderer, ftex, nullptr, &RRect(x, y, real_w, real_h));   
+            int posx = x;
+            if(align == 1)posx = (w-real_w)/2;
+            else if(align == 2)posx = w-real_w;
+            SDL_RenderCopy(Graphics::renderer, ftex, nullptr, &RRect(posx, (h-real_h)>>1, real_w, real_h));   
             SDL_DestroyTexture(ftex);
             SDL_FreeSurface(suf);
         }

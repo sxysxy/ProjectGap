@@ -48,3 +48,8 @@ struct RColor {
         rgba.r = v1, rgba.g = v2, rgba.b = v3, rgba.a = v4;
     }
 };
+
+extern thread_local WIN32_FIND_DATAA FileFindData;
+extern thread_local char FileFindPath[MAX_PATH];
+
+char *GetFullFileName(const char *filename);

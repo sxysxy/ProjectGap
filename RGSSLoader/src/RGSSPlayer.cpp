@@ -23,7 +23,11 @@ void RGSSPlayer::LoadIniConfig() {
     szIniPath[len-3] = L'i';
     if (GetFileAttributesW(szIniPath) != INVALID_FILE_ATTRIBUTES) {
         GetPrivateProfileStringW(L"Game", L"Title", lpDefaultTitle, szTitle, MAX_PATH, szIniPath);
+#ifndef _DEBUG
         GetPrivateProfileStringW(L"Game", L"Library", lpDefaultLibrary, szLibrary, MAX_PATH, szIniPath);
+#else
+        wcscpy(szLibrary, L"RGSS301_Debug.dll");
+#endif
         GetPrivateProfileStringW(L"Game", L"Scripts", lpDefaultScripts, szScripts, MAX_PATH, szIniPath);
         GetPrivateProfileStringW(L"Game", L"RTP", L"", szRTP, MAX_PATH, szIniPath);
     }else{

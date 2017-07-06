@@ -20,11 +20,21 @@ namespace RGSS {
             struct RenderTask {
                 VALUE sprite;
                 RenderTaskCall render;
-                inline int priority() const{
+                unsigned order;   //用于记录先后顺序(priority相同的情况下比较order)
+                inline int priorityz() const{
                     return FIX2INT(rb_funcall2(sprite, rb_intern("z"), 0, nullptr));
                 }
+                inline int priorityy() const {
+                    return FIX2INT(rb_funcall2(sprite, rb_intern("y"), 0, nullptr));
+                }
                 bool operator<(const RenderTask &t)const {
-                    return priority() < t.priority();
+                    int a =  priorityz(), b = t.priorityz();
+                    if(a < b)return true;
+                    else if (a == b) {
+                        int c = priorityy(), d = t.priorityy();
+                        return (c < d || (c == d && order < t.order));
+                    }else
+                        return false;
                 }
                 bool IsValid() const{
                     return rb_funcall2(sprite, rb_intern("disposed?"), 0, nullptr) != Qtrue;
@@ -46,8 +56,9 @@ namespace RGSS {
             };
             extern tagGraphicsData GraphicsData;
             
+            extern unsigned gTaskOrder;
             inline void CreateRenderTask(VALUE obj, const std::function<void(void)> &t) {
-                GraphicsData.tasks.insert(new RenderTask{obj, t});
+                GraphicsData.tasks.insert(new RenderTask{obj, t, gTaskOrder++});
             }
 
             extern SDL_Renderer *renderer;
