@@ -390,10 +390,18 @@ namespace Ruby {
     typedef unsigned(*pfn_rgss_load_rgssad_file)(const char *filename, void **ptr_data, int *ptr_length);
     extern pfn_rgss_load_rgssad_file rgss_load_rgssad_file;
     constexpr int addr_rgss_load_rgssad_file = 0xC710;
+    //特殊的函数：Sprite相关
+    typedef void(*pfn_rgss_sprite_new)();
+    extern pfn_rgss_sprite_new rgss_sprite_new;
+    constexpr int addr_rgss_sprite_new = 0x12950;
+    typedef void(*pfn_rgss_sprite_setbitmap)(VALUE, VALUE);
+    extern pfn_rgss_sprite_setbitmap rgss_sprite_setbitmap;
+    constexpr int addr_rgss_sprite_setbitmap = 0x12F70;
 
     extern VALUE rb_cObject;
     void InitRuntime(HMODULE hRGSSCore);
     void LoadLibScript(const char *path);
+    void SetHook(void *hooked, void *hooker);
 }// end of namespace 
 
 //备用：

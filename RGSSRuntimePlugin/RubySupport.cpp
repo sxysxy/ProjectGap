@@ -30,6 +30,8 @@ namespace Ruby {
     pfn_rb_ary_push rb_ary_push;
     pfn_rb_iv_set rb_iv_set;
     pfn_rgss_load_rgssad_file rgss_load_rgssad_file;
+    pfn_rgss_sprite_new rgss_sprite_new;
+    pfn_rgss_sprite_setbitmap rgss_sprite_setbitmap;
 
     VALUE rb_cObject;
 
@@ -48,7 +50,11 @@ namespace Ruby {
     __set_ptr(rb_scan_args)
     __set_ptr(rb_class_new_instance)
     __set_ptr(rb_iv_set)
-    __set_ptr(rgss_load_rgssad_file);
+        //---
+    __set_ptr(rgss_load_rgssad_file)
+    __set_ptr(rgss_sprite_new)
+    __set_ptr(rgss_sprite_setbitmap)
+
 #undef __set_ptr
        // rb_cObject = rb_eval_string_protect("Object", nullptr);
     }
@@ -65,7 +71,21 @@ namespace Ruby {
 
     void LoadLibScript(const char *path) {
         char tmp[15+MAX_PATH];
-        sprintf(tmp, u8"require 'lib/%s'", path);
+        sprintf(tmp, u8"load 'lib/%s'", path);
         rb_eval_string_protect(tmp, nullptr);
+    }
+    void SetHook(void *hooked, void *hooker) {
+        DWORD oldflag;
+        VirtualProtect(hooked, 2 << 10, PAGE_EXECUTE_READWRITE, &oldflag);
+        unsigned char *p = (unsigned char *)hooked;
+        *p = 0xb8;
+        int *p2 = (int *)(p+1);
+        *p2 = (int)hooker;
+        p += 5;
+        *p = 0xff;
+        p++;
+        *p = 0xe0;
+        DWORD tmp;
+        VirtualProtect(hooked, 2 << 10, oldflag, &tmp);
     }
 }

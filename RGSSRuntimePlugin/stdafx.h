@@ -6,6 +6,8 @@
 #pragma once
 
 #define WIN32_LEAN_AND_MEAN             // 从 Windows 头中排除极少使用的资料
+
+#pragma warning(disable: 4996) 
 // Windows 头文件: 
 #include <windows.h>
 #include <cstdio>

@@ -7,6 +7,8 @@
 #include "RGSSBitmap.h"
 #include "RGSSGraphics.h"
 #include "RGSSSprite.h"
+#include "RGSSLoader.h"
+#include "RGSSWindow.h"
 
 PluginData gPluginData;
 
@@ -30,13 +32,14 @@ extern "C" {
         WideCharToMultiByte(CP_UTF8, 0, szBuffer1, -1, gPluginData.RTPPath, len, nullptr, nullptr);
 
         RegCloseKey(hKey);
-        
     }
 
     RGSSRUNTIMEPLUGIN_API void ApplyPlugin() {
+        RGSS::RGSSLoader::InitRGSSLoader(); //0
         RGSS::Graphics::InitGraphics();     //1
         RGSS::Bitmap::InitBitmap();         //2
         RGSS::Sprite::InitSprite();         //3
+        RGSS::Window::InitWindow();         //4
     }
 }
 

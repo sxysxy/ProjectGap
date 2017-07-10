@@ -39,9 +39,9 @@ namespace RGSS {
     void RGB2HSL(int r, int g, int b, float &h, float &s, float &l) {
         h = 0, s = 0;
         int maxv = Rmax(r, Rmax(g, b)), minv = Rmin(r, Rmin(g, b));
-        float delta = maxv - minv;
+        float delta = float(maxv - minv);
         h = s = 0;
-        l = (maxv + minv) / 2.0;
+        l = (maxv + minv) / 2.0f;
 
         if (delta > 0) {
             if (r == maxv) {
@@ -199,6 +199,7 @@ namespace RGSS {
         }
         static VALUE __cdecl show_on_screen(VALUE self, VALUE x, VALUE y) {
             SDL_SetRenderTarget(Graphics::renderer, nullptr);
+            SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND);
             RRect drect(FIX2INT(x), FIX2INT(y), FIX2INT(width(self)), FIX2INT(height(self)));
             RRect srect(0, 0, FIX2INT(width(self)), FIX2INT(height(self)));
             SDL_RenderCopy(Graphics::renderer, GetTexture(self), &srect, &drect);
@@ -207,10 +208,12 @@ namespace RGSS {
         static VALUE __cdecl stretch_blt_opacity(VALUE self, VALUE dest_rect, VALUE src_bmp, VALUE src_rect, VALUE opacity) {
             SDL_SetRenderTarget(Graphics::renderer, GetTexture(self));
             SDL_Texture *tex = GetTexture(src_bmp);
+            Uint8 alpha;
+            SDL_GetTextureAlphaMod(tex, &alpha);
             SDL_SetTextureAlphaMod(tex, FIX2INT(opacity));
             SDL_RenderCopyEx(Graphics::renderer, tex, &RGSSRect2RRect(src_rect), &RGSSRect2RRect(dest_rect),
                                 0, nullptr, SDL_FLIP_NONE);
-            SDL_SetTextureAlphaMod(tex, 255);
+            SDL_SetTextureAlphaMod(tex, alpha);
             GetData(self)->dirty = true;
             return Qnil;
         }

@@ -35,17 +35,26 @@ namespace RGSS {
             });
             return self;
         }
-  
         static VALUE update(VALUE self) {
             return Qnil;
         }
-
+        static VALUE xxx(VALUE self) {
+            MessageBoxW(0, L"233", L"2333", 0);
+            return Qnil;
+        }
+       
         void InitSprite() {
             klass = rb_eval_cstring("Sprite");
             LoadLibScript("Sprite.rb");
 
             rb_define_method(klass, "__init", initialize, 0);
             rb_define_method(klass, "update", update, 0);
+
+            //Set Hook
+           // SetHook(rgss_sprite_new, xxx);
+           // SetHook(gPluginData.hRGSSCore + 0xa450/4, initialize);
+           // SetHook(gPluginData.hRGSSCore + 0xa510/4, initialize);
+           // SetHook(rgss_sprite_setbitmap, xxx);
         }
     }
 }

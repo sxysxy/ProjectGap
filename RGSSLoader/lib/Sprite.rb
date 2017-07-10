@@ -21,6 +21,7 @@ class Sprite
     @tone = Tone.new(0, 0, 0, 0)
     @disposed = false
   end
+
   def initialize(*arg)
     init_default_members
     if arg.size == 1
@@ -30,6 +31,7 @@ class Sprite
     end
     __init
   end
+
   def bitmap
     return @bitmap
   end

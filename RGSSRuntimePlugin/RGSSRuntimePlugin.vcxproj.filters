@@ -33,6 +33,12 @@
     <ClInclude Include="RGSSSprite.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="RGSSLoader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RGSSWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -54,6 +60,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RGSSSprite.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RGSSLoader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RGSSWindow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
