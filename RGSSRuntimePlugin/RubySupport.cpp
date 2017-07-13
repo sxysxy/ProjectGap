@@ -32,8 +32,11 @@ namespace Ruby {
     pfn_rgss_load_rgssad_file rgss_load_rgssad_file;
     pfn_rgss_sprite_new rgss_sprite_new;
     pfn_rgss_sprite_setbitmap rgss_sprite_setbitmap;
+    pfn_rb_eval_string rb_eval_string;
+    pfn_rb_protect rb_protect;
 
     VALUE rb_cObject;
+    VALUE rb_mObjectSpace;
 
     void InitRuntime(HMODULE hRGSSCore) {
 #define __set_ptr(fn) fn = (pfn_##fn)((DWORD)addr_##fn+(DWORD)hRGSSCore);
@@ -50,6 +53,8 @@ namespace Ruby {
     __set_ptr(rb_scan_args)
     __set_ptr(rb_class_new_instance)
     __set_ptr(rb_iv_set)
+    __set_ptr(rb_protect)
+    __set_ptr(rb_eval_string)
         //---
     __set_ptr(rgss_load_rgssad_file)
     __set_ptr(rgss_sprite_new)
@@ -57,6 +62,8 @@ namespace Ruby {
 
 #undef __set_ptr
        // rb_cObject = rb_eval_string_protect("Object", nullptr);
+        rb_cObject = rb_eval_cstring("Objcet");
+        rb_mObjectSpace = rb_eval_cstring("ObjectSpace");
     }
     VALUE __cdecl rb_eval_cstring(const char *code) {
         return rb_eval_string_protect(code, nullptr);

@@ -13,7 +13,7 @@ namespace RGSS {
               
                 bool visible = rb_funcall2(self, rb_intern("visible"), 0, nullptr) == Qtrue;
                 int x = FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr));
-                int y = FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr));
+                int y = FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr));
                 int ox = FIX2INT(rb_funcall2(self, rb_intern("ox"), 0, nullptr));
                 int oy = FIX2INT(rb_funcall2(self, rb_intern("oy"), 0, nullptr));
                 double zoom_x = rb_float_noflonum_value(rb_funcall2(self, rb_intern("zoom_x"), 0, nullptr));
@@ -21,9 +21,10 @@ namespace RGSS {
                 int angle = FIX2INT(rb_funcall2(self, rb_intern("angle"), 0, nullptr));
                 bool hmirror = rb_funcall2(self, rb_intern("mirror"), 0, nullptr) == Qtrue;
                 bool vmirror = rb_funcall2(self, rb_intern("vmirror"), 0, nullptr) == Qtrue;
+                int opacity = rb_funcall2(self, rb_intern("opacity"), 0, nullptr);
 
                 Bitmap::BitmapData *data = Bitmap::GetData(bitmap);
-                if(!data->texture)return;
+                if(!data || !data->texture)return;
                 
                 RRect srcR(0, 0, data->width, data->height);
                 RRect destR(x, y, int(zoom_x*data->width), int(zoom_y*data->height));
@@ -31,7 +32,11 @@ namespace RGSS {
                 SDL_RendererFlip flip = (SDL_RendererFlip)(SDL_FLIP_HORIZONTAL*hmirror | SDL_FLIP_VERTICAL*vmirror);
                 SDL_SetRenderTarget(Graphics::renderer, nullptr);
                 SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND);
+                Uint8 old_opacity;
+                SDL_GetTextureAlphaMod(data->texture, &old_opacity);
+                SDL_SetTextureAlphaMod(data->texture, opacity);
                 SDL_RenderCopyEx(Graphics::renderer, data->texture, &srcR, &destR, -angle, &center, flip);
+                SDL_SetTextureAlphaMod(data->texture, old_opacity);
             });
             return self;
         }

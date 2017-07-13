@@ -102,7 +102,7 @@ namespace RGSS {
             rb_define_module_function(klass, "clear", clear, 0);
             rb_define_module_function(klass, "frame_count", frame_count, 0);
             rb_define_module_function(klass, "brightness", get_brightness, 0);
-            rb_define_module_function(klass, "brightness=", set_brightness, 0);
+            rb_define_module_function(klass, "brightness=", set_brightness, 1);
             rb_define_module_function(klass, "frame_reset", frame_reset, 0);
             rb_define_module_function(klass, "freeze", freeze, 0);
             rb_define_module_function(klass, "__transition_noarg", transition0, 0);
@@ -110,6 +110,10 @@ namespace RGSS {
             rb_define_module_function(klass, "__transition_2args", transition2, 2);
             rb_define_module_function(klass, "__transition_3args", transition3, 3);
             rb_define_module_function(klass, "snap_to_bitmap", snap_to_bitmap, 0);
+        }
+
+        VALUE rgss_check_sprite_dispose_protect(VALUE sprite) {
+            return rb_funcall2(sprite, rb_intern("disposed?"), 0, nullptr);
         }
     }
 }

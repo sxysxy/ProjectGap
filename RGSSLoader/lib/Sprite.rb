@@ -38,10 +38,13 @@ class Sprite
   def bitmap=(bmp)
     @bitmap = bmp
   end
-  attr_accessor :visible
-  attr_accessor :x, :y, :z, :ox, :oy, :zoom_x, :zoom_y
+  attr_accessor :visible, :opacity
+  attr_accessor :zoom_x, :zoom_y
+  attr_reader :x, :y, :z, :ox, :oy
   attr_accessor :angle
   attr_accessor :mirror, :vmirror
+  attr_accessor :blend_type
+  attr_accessor :bush_depth
   
   #attr_accessor :angle, :mirror  
   def dispose
@@ -50,4 +53,31 @@ class Sprite
   def disposed?
     @disposed == true
   end
+  
+  def x=(_x)
+    @x = _x.to_i
+  end
+  def y=(_y)
+    @y = _y.to_i
+  end
+  def z=(_z)
+    @z = _z.to_i
+  end
+  def ox=(_ox)
+    @ox = _ox.to_i
+  end
+  def oy=(_oy)
+    @oy = _oy.to_i
+  end
+  
+  def src_rect
+    return Rect.new(0, 0, @bitmap.width, @bitmap.height) if @bitmap
+  end
+  def width
+    return src_rect.width
+  end
+  def height
+    return src_rect.height
+  end
+  
 end

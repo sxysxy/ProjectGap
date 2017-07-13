@@ -225,6 +225,8 @@ namespace Ruby {
     constexpr int addr_rb_define_global_const = 0x68320;                //OK
     //constexpr int addr_rb_define_global_function = 426224;
     constexpr int addr_rb_eval_string_protect = 0x30440;                //OK
+    constexpr int addr_rb_eval_string = 0x30410;                        //OK
+    constexpr int addr_rb_protect = 0x6a240;                            //OK
     /*
     constexpr int addr_rb_id2name = 653040;
     constexpr int addr_rb_id2str = 295536;
@@ -292,8 +294,9 @@ namespace Ruby {
 
     typedef VALUE(*pfn_rb_eval_string)(const char*);
     typedef VALUE(*pfn_rb_eval_string_protect)(const char*, int*);
+    typedef VALUE(*pfn_rb_protect)(void *pfn, VALUE arg, int *state);
 
-    typedef VALUE(*pfn_rb_protect)(VALUE(*)(VALUE), VALUE, int*);
+//    typedef VALUE(*pfn_rb_protect)(VALUE(*)(VALUE), VALUE, int*);
     typedef void(*pfn_rb_raise)(VALUE, const char*, ...);
     typedef VALUE(*pfn_rb_errinfo)(void);
 
@@ -383,6 +386,8 @@ namespace Ruby {
     extern pfn_rb_ary_new rb_ary_new;
     extern pfn_rb_ary_push rb_ary_push;
     extern pfn_rb_iv_set rb_iv_set;
+    extern pfn_rb_eval_string rb_eval_string;
+    extern pfn_rb_protect rb_protect;
     VALUE __cdecl rb_eval_cstring(const char *code);
     VALUE __cdecl rb_iv_get(VALUE obj, const char *name);
 
@@ -399,6 +404,7 @@ namespace Ruby {
     constexpr int addr_rgss_sprite_setbitmap = 0x12F70;
 
     extern VALUE rb_cObject;
+    extern VALUE rb_mObjectSpace;
     void InitRuntime(HMODULE hRGSSCore);
     void LoadLibScript(const char *path);
     void SetHook(void *hooked, void *hooker);

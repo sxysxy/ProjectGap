@@ -93,6 +93,11 @@ class Bitmap
     end
   end
   
+  def rect
+    #puts [@width, @height]
+    Rect.new(0, 0, width, height)
+  end
+  
   #往下开始，注释千万不要去掉
 =begin
   def width

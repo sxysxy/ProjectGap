@@ -14,14 +14,6 @@
 */
 
 namespace RGSS {
-    template<typename T>
-    inline T Rmax(const T &a, const T &b) {
-        return a > b ? a : b;
-    }
-    template<typename T>
-    inline T Rmin(const T &a, const T &b) {
-        return a < b? a : b;
-    }
 
     RColor RGSSColor2RColor(VALUE color) {   //to rgba 我们默认使用RGBA8888
         typedef unsigned char u8;
@@ -147,10 +139,10 @@ namespace RGSS {
             return p->texture?Qtrue:Qfalse;
         }
      
-        static VALUE __cdecl check_disposed(VALUE self) {
+        VALUE __cdecl check_disposed(VALUE self) {
             return rb_iv_get(self, "@__disposed") != Qfalse;
         }
-        static VALUE __cdecl dispose(VALUE self) {
+        VALUE __cdecl dispose(VALUE self) {
             if(check_disposed(self))return Qnil;
             BitmapData *p = GetData(self);
             free(p->pixels);
@@ -160,12 +152,12 @@ namespace RGSS {
             rb_iv_set(self, "@bitmap_data", INT2FIX(0));
             return Qnil;
         }
-        static VALUE __cdecl get_texture(VALUE self) { //注：这个是给ruby层面用的
+        VALUE __cdecl get_texture(VALUE self) { //注：这个是给ruby层面用的
             BitmapData *p = GetData(self);
             if(p)return INT2FIX((int)p->texture);
             else return Qnil;
         }
-        static VALUE __cdecl rect(VALUE self) {
+        VALUE __cdecl rect(VALUE self) {
             char buf[120];
             BitmapData *p = GetData(self); 
             int w = p?p->width:0, h = p?p->height:0;
@@ -179,25 +171,25 @@ namespace RGSS {
             SDL_SetRenderDrawColor(Graphics::renderer, 0, 0, 0, 0);
             d->dirty = true;
         }
-        static VALUE __cdecl fill_rect1(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h, VALUE color) {
+        VALUE __cdecl fill_rect1(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h, VALUE color) {
             RRect rect(FIX2INT(x), FIX2INT(y), FIX2INT(w), FIX2INT(h));
             RColor c = RGSSColor2RColor(color);
             fill_rect(GetData(self), &rect, c);
             return Qnil;
         }
-        static VALUE __cdecl fill_rect2(VALUE self, VALUE rect, VALUE color) {
+        VALUE __cdecl fill_rect2(VALUE self, VALUE rect, VALUE color) {
             fill_rect(GetData(self), &RGSSRect2RRect(rect), RGSSColor2RColor(color));
             return Qnil;
         }
-        static VALUE __cdecl width(VALUE self) {
+        VALUE __cdecl width(VALUE self) {
             BitmapData *p = GetData(self);
             return p ? INT2FIX(p->width) : INT2FIX(0);
         }
-        static VALUE __cdecl height(VALUE self) {
+        VALUE __cdecl height(VALUE self) {
             BitmapData *p = GetData(self);
             return p ? INT2FIX(p->height) : INT2FIX(0);
         }
-        static VALUE __cdecl show_on_screen(VALUE self, VALUE x, VALUE y) {
+        VALUE __cdecl show_on_screen(VALUE self, VALUE x, VALUE y) {
             SDL_SetRenderTarget(Graphics::renderer, nullptr);
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND);
             RRect drect(FIX2INT(x), FIX2INT(y), FIX2INT(width(self)), FIX2INT(height(self)));
@@ -205,32 +197,36 @@ namespace RGSS {
             SDL_RenderCopy(Graphics::renderer, GetTexture(self), &srect, &drect);
             return Qnil;
         }
-        static VALUE __cdecl stretch_blt_opacity(VALUE self, VALUE dest_rect, VALUE src_bmp, VALUE src_rect, VALUE opacity) {
-            SDL_SetRenderTarget(Graphics::renderer, GetTexture(self));
-            SDL_Texture *tex = GetTexture(src_bmp);
+         
+        void __cdecl stretch_blt_opacity_base(BitmapData *dest_data, const RRect &dest_rect,  SDL_Texture *src, const RRect &src_rect, int opacity) {
+            SDL_SetRenderTarget(Graphics::renderer, dest_data->texture);
+            SDL_Texture *tex = src;
             Uint8 alpha;
             SDL_GetTextureAlphaMod(tex, &alpha);
-            SDL_SetTextureAlphaMod(tex, FIX2INT(opacity));
-            SDL_RenderCopyEx(Graphics::renderer, tex, &RGSSRect2RRect(src_rect), &RGSSRect2RRect(dest_rect),
+            SDL_SetTextureAlphaMod(tex, opacity);
+            SDL_RenderCopyEx(Graphics::renderer, tex, &src_rect, &dest_rect,
                                 0, nullptr, SDL_FLIP_NONE);
             SDL_SetTextureAlphaMod(tex, alpha);
-            GetData(self)->dirty = true;
+            dest_data->dirty = true;
+        }
+        VALUE __cdecl stretch_blt_opacity(VALUE self, VALUE dest_rect, VALUE src_bmp, VALUE src_rect, VALUE opacity) {
+            stretch_blt_opacity_base(GetData(self), RGSSRect2RRect(dest_rect), GetTexture(src_bmp), RGSSRect2RRect(src_rect),
+                                        FIX2INT(opacity));
             return Qnil;
         }
-        static VALUE __cdecl stretch_blt(VALUE self, VALUE dest_rect, VALUE src_bmp, VALUE src_rect) {
+        VALUE __cdecl stretch_blt(VALUE self, VALUE dest_rect, VALUE src_bmp, VALUE src_rect) {
             return stretch_blt_opacity(self, dest_rect, src_bmp, src_rect, 255);
         }
-        static VALUE __cdecl blt_opacity(VALUE self, VALUE x, VALUE y, VALUE src_bmp, VALUE src_rect, VALUE opacity) {
-            char code[256];
-            sprintf(code, "Rect.new(%d,%d,%d,%d)", FIX2INT(x), FIX2INT(y), 
-                    FIX2INT(rb_funcall2(src_rect, rb_intern("width"), 0, nullptr)),
-                    FIX2INT(rb_funcall2(src_rect, rb_intern("height"), 0, nullptr)));
-            return stretch_blt_opacity(self, rb_eval_cstring(code), src_bmp, src_rect, opacity);
+        VALUE __cdecl blt_opacity(VALUE self, VALUE x, VALUE y, VALUE src_bmp, VALUE src_rect, VALUE opacity) {
+            RRect sr = RGSSRect2RRect(src_rect);
+            RRect dr(FIX2INT(x), FIX2INT(y), sr.w, sr.h);
+            stretch_blt_opacity_base(GetData(self), dr, GetTexture(src_bmp), sr, FIX2INT(opacity));
+            return Qnil;
         }
-        static VALUE __cdecl blt(VALUE self, VALUE x, VALUE y, VALUE src_bmp, VALUE src_rect) {
+        VALUE __cdecl blt(VALUE self, VALUE x, VALUE y, VALUE src_bmp, VALUE src_rect) {
             return blt_opacity(self, x, y, src_bmp, src_rect, 255);
         }
-        static VALUE __cdecl clear(VALUE self) {
+        VALUE __cdecl clear(VALUE self) {
             SDL_SetRenderDrawColor(Graphics::renderer, 0, 0, 0, 0);             //
             BitmapData *d = GetData(self);
             SDL_SetRenderTarget(Graphics::renderer, d->texture);
@@ -238,13 +234,13 @@ namespace RGSS {
             d->dirty = true;
             return Qnil;
         }
-        static VALUE __cdecl clear_rect1(VALUE self, VALUE rect) {
+        VALUE __cdecl clear_rect1(VALUE self, VALUE rect) {
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_NONE);  //覆盖模式
             fill_rect(GetData(self), &RGSSRect2RRect(rect), RColor(0));
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND); //切换回合成模式 
             return Qnil;
         }
-        static VALUE __cdecl clear_rect2(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h) {
+        VALUE __cdecl clear_rect2(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h) {
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_NONE);  //覆盖模式
             fill_rect(GetData(self), &RRect(FIX2INT(x), FIX2INT(y), FIX2INT(w), FIX2INT(h)), RColor(0));
             SDL_SetRenderDrawBlendMode(Graphics::renderer, SDL_BLENDMODE_BLEND); //切换回合成模式 
@@ -422,7 +418,7 @@ namespace RGSS {
             d->size = 24;
            // d->style = TTF_STYLE_NORMAL; //0
 
-            d->font = TTF_OpenFont(RSTRING_PTR(name), 24);
+            d->font = TTF_OpenFont(RSTRING_PTR(name), d->size-2);
             if(!d->font)puts(SDL_GetError());
 
             rb_iv_set(self, "@font_data", INT2FIX((long)d));
@@ -433,7 +429,7 @@ namespace RGSS {
             if(!d)return Qnil;
             d->size = FIX2INT(rb_funcall2(self, rb_intern("size"), 0, nullptr));
             TTF_CloseFont(d->font);
-            d->font = TTF_OpenFont(RSTRING_PTR(rb_funcall2(self, rb_intern("font_name"), 0, nullptr)), d->size);
+            d->font = TTF_OpenFont(RSTRING_PTR(rb_funcall2(self, rb_intern("font_name"), 0, nullptr)), d->size-2);
             return INT2FIX(d->size);
         }
         static VALUE __cdecl dispose_font(VALUE self) {
@@ -457,12 +453,13 @@ namespace RGSS {
             int posx = x;
             if(align == 1)posx = (w-real_w)/2;
             else if(align == 2)posx = w-real_w;
-            SDL_RenderCopy(Graphics::renderer, ftex, nullptr, &RRect(posx, (h-real_h)>>1, real_w, real_h));   
+            SDL_RenderCopy(Graphics::renderer, ftex, nullptr, &RRect(posx, y+((h-real_h)>>1), real_w, real_h));   
             SDL_DestroyTexture(ftex);
             SDL_FreeSurface(suf);
         }
         static VALUE __cdecl draw_text1(VALUE self, VALUE x, VALUE y, VALUE w, VALUE h, VALUE str, VALUE align) {
             BitmapData *d = GetData(self);
+            str = rb_funcall2(str, rb_intern("to_s"), 0, nullptr);
             VALUE font = rb_funcall2(self, rb_intern("font"), 0, nullptr);
             draw_text(d->texture, GetFontData(font)->font,
                 RSTRING_PTR(str), RGSSColor2RColor(rb_funcall2(font, rb_intern("color"), 0, nullptr)),
@@ -476,6 +473,7 @@ namespace RGSS {
         static VALUE __cdecl draw_text3(VALUE self, VALUE rect, VALUE str, VALUE align) {
             RRect r = RGSSRect2RRect(rect);
             BitmapData *d = GetData(self);
+            str = rb_funcall2(str, rb_intern("to_s"), 0, nullptr);
             VALUE font = rb_funcall2(self, rb_intern("font"), 0, nullptr);
             draw_text(d->texture, GetFontData(font)->font, 
                 RSTRING_PTR(str), RGSSColor2RColor(rb_funcall2(font, rb_intern("color"), 0, nullptr)),
@@ -485,6 +483,17 @@ namespace RGSS {
         }
         static VALUE __cdecl draw_text4(VALUE self, VALUE rect, VALUE str) {
             return draw_text3(self, rect, str, 0);
+        }
+        static VALUE __cdecl text_size(VALUE self, VALUE str) {
+            str = rb_funcall2(str, rb_intern("to_s"), 0, nullptr);
+            VALUE font = rb_funcall2(self, rb_intern("font"), 0, nullptr);
+            FontData *d = GetFontData(font);
+            if(!d || !d->font)return Qnil;
+            int w, h;
+            TTF_SizeUTF8(d->font, RSTRING_PTR(str), &w, &h);
+            char buf[100];
+            sprintf(buf, "Rect.new(0,0,%d,%d)", w, h);
+            return rb_eval_cstring(buf);
         }
         void InitBitmap() {
             klass = rb_eval_string_protect(u8"Bitmap", nullptr);
@@ -555,6 +564,8 @@ namespace RGSS {
             rb_define_method(klass, "__draw_text_5args", draw_text2, 5);
             rb_define_method(klass, "__draw_text_3args", draw_text3,3);
             rb_define_method(klass, "__draw_text_2args", draw_text4, 2);
+            
+            rb_define_method(klass, "text_size", text_size, 1);
             
         }
         

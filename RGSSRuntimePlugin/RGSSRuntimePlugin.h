@@ -53,3 +53,15 @@ extern thread_local WIN32_FIND_DATAA FileFindData;
 extern thread_local char FileFindPath[MAX_PATH];
 
 char *GetFullFileName(const char *filename);
+
+namespace RGSS {
+    //不知道为什么std::max会出错，似乎是和一个叫max的宏冲突了...
+    template<typename T>   
+    inline T Rmax(const T &a, const T &b) {
+        return a > b ? a : b;
+    }
+    template<typename T>
+    inline T Rmin(const T &a, const T &b) {
+        return a < b ? a : b;
+    }
+}

@@ -32,5 +32,8 @@ namespace RGSS {
             BitmapData *p = GetData(self);
             return p ? p->texture : nullptr;
         }
+
+        VALUE __cdecl dispose(VALUE self);
+        void __cdecl stretch_blt_opacity_base(BitmapData *dest_data, const RRect &dest_rect, SDL_Texture *src, const RRect &src_rect, int opacity);
     }
 }

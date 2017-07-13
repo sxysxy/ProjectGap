@@ -15,7 +15,6 @@ PluginData gPluginData;
 extern "C" {
     RGSSRUNTIMEPLUGIN_API void InitPlugin(PluginData *data) {
         Ruby::InitRuntime(data->hRGSSCore);
-        Ruby::rb_cObject = Ruby::rb_eval_string_protect(u8"Object", nullptr);
         memcpy(&gPluginData, data, sizeof(PluginData));
 
         //get_rtp
