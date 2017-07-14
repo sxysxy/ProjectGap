@@ -72,9 +72,14 @@ void RGSSPlayer::CreatPlayerWindow() {
     SDL_GetWindowWMInfo(window, &info);
     hWnd = info.info.win.window;
     SetWindowText(hWnd, szTitle);
+#ifdef _DEBUG
+    bool bConsole = true;
+#else
+    bool bConsole = false;
+#endif
     if (lpArgv) {
         for (int i = 0; i < nArgc; i++) {
-            if (!lstrcmpW(lpArgv[i], L"console")) {
+            if (!lstrcmpW(lpArgv[i], L"console") || bConsole) {
                 if (AllocConsole()) {
                     SetConsoleTitle(L"RGSS Console");
                     freopen("conout$", "w", stdout);

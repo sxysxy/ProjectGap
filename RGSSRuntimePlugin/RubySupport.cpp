@@ -96,3 +96,36 @@ namespace Ruby {
         VirtualProtect(hooked, 2 << 10, oldflag, &tmp);
     }
 }
+
+namespace Ruby {
+    ID ID_x;
+    ID ID_y;
+    ID ID_z;
+    ID ID_width;
+    ID ID_height;
+    ID ID_ox;
+    ID ID_oy;
+    ID ID_red;
+    ID ID_green;
+    ID ID_blue;
+    ID ID_alpha;
+    ID ID_bitmap;
+
+    void PreLoadID() {
+#define __set_id(id) ID_##id = rb_intern(#id);
+        __set_id(x)
+        __set_id(y)
+        __set_id(z)
+        __set_id(width)
+        __set_id(height)
+        __set_id(ox)
+        __set_id(oy)
+        __set_id(red)
+        __set_id(green)
+        __set_id(blue)
+        __set_id(alpha)
+        __set_id(bitmap)
+
+#undef __set_id
+    }
+}

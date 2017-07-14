@@ -110,6 +110,9 @@ class Bitmap
   end
   def set_pixel(x, y, color)
   end
+  def text_size(str)
+  end
+  
   def hue_change(hue)
     #改变色调，这是个很慢的方法，没比rgss默认的方法快多少
       #求硬件渲染实现这个的方法qvq
@@ -121,6 +124,13 @@ class Bitmap
   def show_on_screen(x, y)
     #懒省事专用，不借助精灵，直接把这个位图贴到画面上。(x,y)左上角坐标
     #方法：在场景的update里面调用这个show_on_screen方法即可
+  end
+  def save_png(filename)
+    #保存为png文件：filename。
+    #return nil
+  end
+  def pixel_data
+    #以ruby字符串的形式返回原始像素数据
   end
 =end
   

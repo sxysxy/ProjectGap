@@ -8,14 +8,14 @@ namespace RGSS {
         
         static VALUE initialize(VALUE self) {  
             Graphics::CreateRenderTask(self, [self]() {
-                VALUE bitmap = rb_funcall2(self, rb_intern("bitmap"), 0, nullptr);
+                VALUE bitmap = rb_funcall2(self, ID_bitmap, 0, nullptr);
                 if(bitmap == Qnil)return;
               
                 bool visible = rb_funcall2(self, rb_intern("visible"), 0, nullptr) == Qtrue;
-                int x = FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr));
-                int y = FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr));
-                int ox = FIX2INT(rb_funcall2(self, rb_intern("ox"), 0, nullptr));
-                int oy = FIX2INT(rb_funcall2(self, rb_intern("oy"), 0, nullptr));
+                int x = FIX2INT(rb_funcall2(self, ID_x, 0, nullptr));
+                int y = FIX2INT(rb_funcall2(self, ID_y, 0, nullptr));
+                int ox = FIX2INT(rb_funcall2(self, ID_ox, 0, nullptr));
+                int oy = FIX2INT(rb_funcall2(self, ID_oy, 0, nullptr));
                 double zoom_x = rb_float_noflonum_value(rb_funcall2(self, rb_intern("zoom_x"), 0, nullptr));
                 double zoom_y = rb_float_noflonum_value(rb_funcall2(self, rb_intern("zoom_y"), 0, nullptr));
                 int angle = FIX2INT(rb_funcall2(self, rb_intern("angle"), 0, nullptr));
@@ -49,7 +49,7 @@ namespace RGSS {
         }
        
         void InitSprite() {
-            klass = rb_eval_cstring("Sprite");
+            klass = rb_eval_string("Sprite");
             LoadLibScript("Sprite.rb");
 
             rb_define_method(klass, "__init", initialize, 0);

@@ -25,17 +25,17 @@ namespace RGSS {
             rb_iv_set(self, "@opacity", INT2FIX(255));
             rb_iv_set(self, "@back_opacity", INT2FIX(255));
             rb_iv_set(self, "@contents_opacity", INT2FIX(255));
-            rb_iv_set(self, "@tone", rb_eval_cstring("Tone.new"));
-            rb_iv_set(self, "@cursor_rect", rb_eval_cstring("Rect.new"));
-            rb_iv_set(self, "@contents", rb_eval_cstring("Bitmap.new(1, 1)"));
+            rb_iv_set(self, "@tone", rb_eval_string("Tone.new"));
+            rb_iv_set(self, "@cursor_rect", rb_eval_string("Rect.new"));
+            rb_iv_set(self, "@contents", rb_eval_string("Bitmap.new(1, 1)"));
             rb_iv_set(self, "@__disposed", Qfalse);
 
-            rb_iv_set(self, "@back_sprite", rb_eval_cstring("Sprite.new"));
-            rb_iv_set(self, "@frame_sprite", rb_eval_cstring("Sprite.new"));
-            rb_iv_set(self, "@contents_sprite", rb_eval_cstring("Sprite.new"));
-            rb_iv_set(self, "@cursor_sprite", rb_eval_cstring("Sprite.new"));
-            rb_iv_set(self, "@arrows_sprite", rb_eval_cstring("Sprite.new"));
-            rb_iv_set(self, "@pause_sprite", rb_eval_cstring("Sprite.new"));
+            rb_iv_set(self, "@back_sprite", rb_eval_string("Sprite.new"));
+            rb_iv_set(self, "@frame_sprite", rb_eval_string("Sprite.new"));
+            rb_iv_set(self, "@contents_sprite", rb_eval_string("Sprite.new"));
+            rb_iv_set(self, "@cursor_sprite", rb_eval_string("Sprite.new"));
+            rb_iv_set(self, "@arrows_sprite", rb_eval_string("Sprite.new"));
+            rb_iv_set(self, "@pause_sprite", rb_eval_string("Sprite.new"));
             return self;
         }
 
@@ -46,10 +46,10 @@ namespace RGSS {
             //int pdb = FIX2INT(rb_funcall2(self, rb_intern("padding_bottom"), 0, nullptr));
             //int w = FIX2INT(rb_funcall2(self, rb_intern("width"), 0, nullptr)) - pd;
             //int h = FIX2INT(rb_funcall2(self, rb_intern("height"), 0, nullptr)) - (pd + pdb) / 2;
-           // printf("%d\n", FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr)) + pd / 2);
-            rb_iv_set(sprite, "@x", INT2FIX(FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr)) + pd / 2));
-            rb_iv_set(sprite, "@y", INT2FIX(FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr)) + pd / 2));
-            rb_iv_set(sprite, "@z", rb_funcall2(self, rb_intern("z"), 0, nullptr));
+           // printf("%d\n", FIX2INT(rb_funcall2(self, ID_y, 0, nullptr)) + pd / 2);
+            rb_iv_set(sprite, "@x", INT2FIX(FIX2INT(rb_funcall2(self, ID_x, 0, nullptr)) + pd / 2));
+            rb_iv_set(sprite, "@y", INT2FIX(FIX2INT(rb_funcall2(self, ID_y, 0, nullptr)) + pd / 2));
+            rb_iv_set(sprite, "@z", rb_funcall2(self, ID_z, 0, nullptr));
 
             //opacity:
             float opacity = FIX2INT(rb_funcall2(self, rb_intern("opacity"), 0, nullptr)) / 255.0f;
@@ -63,9 +63,9 @@ namespace RGSS {
             // int pdb = FIX2INT(rb_funcall2(self, rb_intern("padding_bottom"), 0, nullptr));
             //int w = FIX2INT(rb_funcall2(self, rb_intern("width"), 0, nullptr));
             //int h = FIX2INT(rb_funcall2(self, rb_intern("height"), 0, nullptr));
-            rb_iv_set(sprite, "@x", rb_funcall2(self, rb_intern("x"), 0, nullptr));
-            rb_iv_set(sprite, "@y", rb_funcall2(self, rb_intern("y"), 0, nullptr));
-            rb_iv_set(sprite, "@z", rb_funcall2(self, rb_intern("z"), 0, nullptr));
+            rb_iv_set(sprite, "@x", rb_funcall2(self, ID_x, 0, nullptr));
+            rb_iv_set(sprite, "@y", rb_funcall2(self, ID_y, 0, nullptr));
+            rb_iv_set(sprite, "@z", rb_funcall2(self, ID_z, 0, nullptr));
         }
 
         static void update_contents(VALUE self) {
@@ -74,9 +74,9 @@ namespace RGSS {
             // int pdb = FIX2INT(rb_funcall2(self, rb_intern("padding_bottom"), 0, nullptr));
             // int w = FIX2INT(rb_funcall2(self, rb_intern("width"), 0, nullptr));
             // int h = FIX2INT(rb_funcall2(self, rb_intern("height"), 0, nullptr));
-            rb_iv_set(sprite, "@x", INT2FIX(FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr)) + pd ));
-            rb_iv_set(sprite, "@y", INT2FIX(FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr)) + pd ));;
-            rb_iv_set(sprite, "@z", rb_funcall2(self, rb_intern("z"), 0, nullptr));
+            rb_iv_set(sprite, "@x", INT2FIX(FIX2INT(rb_funcall2(self, ID_x, 0, nullptr)) + pd ));
+            rb_iv_set(sprite, "@y", INT2FIX(FIX2INT(rb_funcall2(self, ID_y, 0, nullptr)) + pd ));;
+            rb_iv_set(sprite, "@z", rb_funcall2(self, ID_z, 0, nullptr));
             rb_iv_set(sprite, "@bitmap", rb_funcall2(self, rb_intern("contents"), 0, nullptr));
 
             //opacity:
@@ -106,8 +106,8 @@ namespace RGSS {
            // int w2 = Rmin(w, FIX2INT(rb_funcall2(self, rb_intern("width"), 0, nullptr)) - pd - x2);
            // int h2 = Rmin(h, FIX2INT(rb_funcall2(self, rb_intern("height"), 0, nullptr)) - pd - y2);
 
-            rb_iv_set(sprite, "@x", INT2FIX(pd + x2 + FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr))));
-            rb_iv_set(sprite, "@y", INT2FIX(pd + y2 + FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr))));
+            rb_iv_set(sprite, "@x", INT2FIX(pd + x2 + FIX2INT(rb_funcall2(self, ID_x, 0, nullptr))));
+            rb_iv_set(sprite, "@y", INT2FIX(pd + y2 + FIX2INT(rb_funcall2(self, ID_y, 0, nullptr))));
             */
           
            // refresh_cursor(self);
@@ -123,8 +123,8 @@ namespace RGSS {
             const int m = 4;
             int x2 = Rmax(x, pd);
             int y2 = Rmax(y, pd);
-            rb_iv_set(sprite, "@x", INT2FIX(pd + x2 + FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr))));
-            rb_iv_set(sprite, "@y", INT2FIX(pd + y2 + FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr))));
+            rb_iv_set(sprite, "@x", INT2FIX(pd + x2 + FIX2INT(rb_funcall2(self, ID_x, 0, nullptr))));
+            rb_iv_set(sprite, "@y", INT2FIX(pd + y2 + FIX2INT(rb_funcall2(self, ID_y, 0, nullptr))));
 
             int count = FIX2INT(rb_funcall2(self, rb_intern("frame_count"), 0, nullptr)%40);
             int cursor_opacity = FIX2INT(rb_funcall2(self, rb_intern("contents_opacity"), 0, nullptr)); 
@@ -145,9 +145,9 @@ namespace RGSS {
             int pdb = FIX2INT(rb_funcall2(self, rb_intern("padding_bottom"), 0, nullptr));
             int w = FIX2INT(rb_funcall2(self, rb_intern("width"), 0, nullptr))-pd;
             int h = FIX2INT(rb_funcall2(self, rb_intern("height"), 0, nullptr))-(pd+pdb)/2;
-            rb_iv_set(sprite, "@x", INT2FIX(FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr))+pd/2));
-            rb_iv_set(sprite, "@y", INT2FIX(FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr))+pd/2));
-            rb_iv_set(sprite, "@z", rb_funcall2(self, rb_intern("z"), 0, nullptr));
+            rb_iv_set(sprite, "@x", INT2FIX(FIX2INT(rb_funcall2(self, ID_x, 0, nullptr))+pd/2));
+            rb_iv_set(sprite, "@y", INT2FIX(FIX2INT(rb_funcall2(self, ID_y, 0, nullptr))+pd/2));
+            rb_iv_set(sprite, "@z", rb_funcall2(self, ID_z, 0, nullptr));
 
             //--------------------------------------------
             VALUE t[2];
@@ -184,9 +184,9 @@ namespace RGSS {
            // int pdb = FIX2INT(rb_funcall2(self, rb_intern("padding_bottom"), 0, nullptr));
             int w = FIX2INT(rb_funcall2(self, rb_intern("width"), 0, nullptr));
             int h = FIX2INT(rb_funcall2(self, rb_intern("height"), 0, nullptr));
-            rb_iv_set(sprite, "@x", rb_funcall2(self, rb_intern("x"), 0, nullptr));
-            rb_iv_set(sprite, "@y", rb_funcall2(self, rb_intern("y"), 0, nullptr));
-            rb_iv_set(sprite, "@z", rb_funcall2(self, rb_intern("z"), 0, nullptr));
+            rb_iv_set(sprite, "@x", rb_funcall2(self, ID_x, 0, nullptr));
+            rb_iv_set(sprite, "@y", rb_funcall2(self, ID_y, 0, nullptr));
+            rb_iv_set(sprite, "@z", rb_funcall2(self, ID_z, 0, nullptr));
 
             //-----------------------------
             VALUE t[2];
@@ -271,7 +271,7 @@ namespace RGSS {
             int y = cursor_rect.y+pd;
             int w = cursor_rect.w;
             int h = cursor_rect.h;
-            const int m = 8;
+            const int m = 4;
             int x2 = Rmax(x, pd);
             int y2 = Rmax(y, pd);
             int ox = x - x2;
@@ -289,8 +289,8 @@ namespace RGSS {
             //rb_iv_set(sprite, "@width", INT2FIX(w2));
             //rb_iv_set(sprite, "@height", INT2FIX(h2));
             
-            rb_iv_set(sprite, "@x", INT2FIX(pd + x2 + FIX2INT(rb_funcall2(self, rb_intern("x"), 0, nullptr))));
-            rb_iv_set(sprite, "@y", INT2FIX(pd + y2 + FIX2INT(rb_funcall2(self, rb_intern("y"), 0, nullptr))));
+            rb_iv_set(sprite, "@x", INT2FIX(pd + x2 + FIX2INT(rb_funcall2(self, ID_x, 0, nullptr))));
+            rb_iv_set(sprite, "@y", INT2FIX(pd + y2 + FIX2INT(rb_funcall2(self, ID_y, 0, nullptr))));
             SDL_Texture *skin = Bitmap::GetTexture(rb_funcall2(self, rb_intern("windowskin"), 0, nullptr));
             Bitmap::BitmapData *contents_data = Bitmap::GetData(bitmap);
             if (skin) {
@@ -350,6 +350,12 @@ namespace RGSS {
                     RRect(ox + w - m, oy + h - m, m, m),
                     skin,
                     RRect(p + q - m, p + q - m, m, m), 255);
+
+
+              //  Bitmap::stretch_blt_opacity_base(contents_data,
+               //     RRect(m , m , w , h),
+                //    skin,
+                 //   RRect(p + m, p + m, q - m, q - m), 255);
             }
 
             return Qnil;
@@ -377,7 +383,7 @@ namespace RGSS {
         }
 
         void InitWindow() {
-            klass = rb_eval_cstring("Window");
+            klass = rb_eval_string("Window");
             LoadLibScript("Window.rb");
 
             rb_define_method(klass, "__init", initialize, 0);

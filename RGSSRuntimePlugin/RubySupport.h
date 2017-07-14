@@ -267,7 +267,7 @@ namespace Ruby {
     typedef void(*pfn_rb_gc_mark)(VALUE);
 
     typedef void(*pfn_rb_define_method)(VALUE classmod, char *name, void *ptr /*VALUE(*)(VALUE, ...)*/, int argc);
-    typedef VALUE(*pfn_rb_define_class)(const char*, VALUE);
+    typedef VALUE(*pfn_rb_define_class)(const char* klassname, VALUE parent_class);
     typedef VALUE(*pfn_rb_define_module)(const char*);
     typedef VALUE(*pfn_rb_define_class_under)(VALUE, const char*, VALUE);
     typedef VALUE(*pfn_rb_define_module_under)(VALUE, const char*);
@@ -292,8 +292,8 @@ namespace Ruby {
     typedef VALUE(*pfn_rb_call_super)(int, const VALUE*);
     typedef int(*pfn_rb_respond_to)(VALUE, ID);
 
-    typedef VALUE(*pfn_rb_eval_string)(const char*);
-    typedef VALUE(*pfn_rb_eval_string_protect)(const char*, int*);
+    typedef VALUE(*pfn_rb_eval_string)(const char* code);
+    typedef VALUE(*pfn_rb_eval_string_protect)(const char* code, int* state);
     typedef VALUE(*pfn_rb_protect)(void *pfn, VALUE arg, int *state);
 
 //    typedef VALUE(*pfn_rb_protect)(VALUE(*)(VALUE), VALUE, int*);
@@ -416,3 +416,20 @@ namespace Ruby {
 sub_1000C710(const char *filename, void **ptr_data, LONG *ptr_length)
 读取加密档案文件
 */
+
+namespace Ruby {
+    extern ID ID_x;
+    extern ID ID_y;
+    extern ID ID_z;
+    extern ID ID_width;
+    extern ID ID_height;
+    extern ID ID_ox;
+    extern ID ID_oy;
+    extern ID ID_red;
+    extern ID ID_green;
+    extern ID ID_blue;
+    extern ID ID_alpha;
+    extern ID ID_bitmap;
+
+    void PreLoadID();
+}

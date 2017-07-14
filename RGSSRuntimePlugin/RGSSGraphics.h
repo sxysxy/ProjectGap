@@ -16,8 +16,6 @@ namespace RGSS {
         extern "C" {
             //
             typedef std::function<void(void)> RenderTaskCall;
-
-            VALUE rgss_check_sprite_dispose_protect(VALUE sprite);
             struct RenderTask {
                 VALUE sprite;
                 RenderTaskCall render;
@@ -38,8 +36,8 @@ namespace RGSS {
                         return false;
                 }
                 bool IsValid() const{
-                   // VALUE s = sprite>>1;
-                    return rb_protect(rgss_check_sprite_dispose_protect, sprite, nullptr) != Qtrue;
+                    if (rb_type(sprite) == RUBY_CLASS_NONE)return false;
+                    return rb_funcall2(sprite, rb_intern("disposed?"), 0, nullptr) != Qtrue;
                 }
             };
             struct CompareTask {
@@ -66,6 +64,7 @@ namespace RGSS {
             extern SDL_Renderer *renderer;
             extern VALUE klass;
             extern tagGraphicsData GraphicsData;
+            extern bool onForeground;
 
             void InitGraphics();
         }

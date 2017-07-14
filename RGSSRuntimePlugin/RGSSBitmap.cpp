@@ -17,16 +17,16 @@ namespace RGSS {
 
     RColor RGSSColor2RColor(VALUE color) {   //to rgba 我们默认使用RGBA8888
         typedef unsigned char u8;
-        return RColor((u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("red"), 0, nullptr)),
-            (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("green"), 0, nullptr)),
-            (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("blue"), 0, nullptr)),
-            (u8)rb_float_noflonum_value(rb_funcall2(color, rb_intern("alpha"), 0, nullptr)));
+        return RColor((u8)rb_float_noflonum_value(rb_funcall2(color, ID_red, 0, nullptr)),
+            (u8)rb_float_noflonum_value(rb_funcall2(color, ID_green, 0, nullptr)),
+            (u8)rb_float_noflonum_value(rb_funcall2(color, ID_blue, 0, nullptr)),
+            (u8)rb_float_noflonum_value(rb_funcall2(color, ID_alpha, 0, nullptr)));
     }
     RRect RGSSRect2RRect(VALUE rect) {
-        return RRect(FIX2INT(rb_funcall2(rect, rb_intern("x"), 0, nullptr)),
-            FIX2INT(rb_funcall2(rect, rb_intern("y"), 0, nullptr)),
-            FIX2INT(rb_funcall2(rect, rb_intern("width"), 0, nullptr)),
-            FIX2INT(rb_funcall2(rect, rb_intern("height"), 0, nullptr)));
+        return RRect(FIX2INT(rb_funcall2(rect, ID_x, 0, nullptr)),
+            FIX2INT(rb_funcall2(rect, ID_y, 0, nullptr)),
+            FIX2INT(rb_funcall2(rect, ID_width, 0, nullptr)),
+            FIX2INT(rb_funcall2(rect, ID_height, 0, nullptr)));
     }
     void RGB2HSL(int r, int g, int b, float &h, float &s, float &l) {
         h = 0, s = 0;
@@ -162,7 +162,7 @@ namespace RGSS {
             BitmapData *p = GetData(self); 
             int w = p?p->width:0, h = p?p->height:0;
             sprintf(buf, "Rect.new(0,0,%d,%d)", w, h);
-            return rb_eval_cstring(buf);
+            return rb_eval_string(buf);
         }
         static void fill_rect(BitmapData *d, const RRect *rect, const RColor c) {
             SDL_SetRenderTarget(Graphics::renderer, d->texture);  
@@ -259,7 +259,7 @@ namespace RGSS {
             RColor t = d->pixels[d->width*FIX2INT(y)+FIX2INT(x)];
             char buf[100];
             sprintf(buf, "Color.new(%d,%d,%d,%d)", t.rgba.r, t.rgba.g, t.rgba.b, t.rgba.a);
-            return rb_eval_cstring(buf);
+            return rb_eval_string(buf);
         }
         static VALUE __cdecl set_pixel(VALUE self, VALUE x, VALUE y, VALUE color) {
             fill_rect(GetData(self), &RRect(FIX2INT(x), FIX2INT(y), 1, 1), RGSSColor2RColor(color));
@@ -319,10 +319,10 @@ namespace RGSS {
             int w = data->width, h = data->height;
             update_pixels(data);
 
-            VALUE kary = rb_eval_cstring("Array");
+            VALUE kary = rb_eval_string("Array");
             VALUE size = INT2FIX(w*h);
             VALUE ary = rb_funcall2(kary, rb_intern("new"), 1, &size); 
-            VALUE kcolor = rb_eval_cstring("Color");
+            VALUE kcolor = rb_eval_string("Color");
 
             const int len = w*h;
             int length = w*h / 4;     //循环展开，4层
@@ -493,11 +493,33 @@ namespace RGSS {
             TTF_SizeUTF8(d->font, RSTRING_PTR(str), &w, &h);
             char buf[100];
             sprintf(buf, "Rect.new(0,0,%d,%d)", w, h);
-            return rb_eval_cstring(buf);
+            return rb_eval_string(buf);
         }
+        inline char *GetPixelsData(BitmapData *data) {
+            update_pixels(data);
+            return (char*)data->pixels;
+        }
+
+        VALUE __cdecl pixel_data(VALUE self) {
+            BitmapData *d = GetData(self);
+            char *png_data = GetPixelsData(d);
+            return rb_str_new(png_data, d->width*d->height*4);
+        }
+
+        VALUE __cdecl save_png(VALUE self, VALUE filename) {
+            BitmapData *d = GetData(self);
+            update_pixels(d);
+            int depth; Uint32 rmask, gmask, bmask, amask;
+            SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_RGBA8888, &depth, &rmask, &gmask, &bmask, &amask);
+            SDL_Surface *s = SDL_CreateRGBSurfaceFrom(d->pixels, d->width, d->height, depth, 4*d->width, rmask, gmask, bmask, amask);
+            IMG_SavePNG(s, RSTRING_PTR(filename));
+            SDL_FreeSurface(s);
+            return Qnil;
+        }
+
         void InitBitmap() {
-            klass = rb_eval_string_protect(u8"Bitmap", nullptr);
-            klass_font = rb_eval_cstring("Font");
+            klass = rb_eval_string("Bitmap");
+            klass_font = rb_eval_string("Font");
 
             //加载扩展脚本
             LoadLibScript("Bitmap.rb");
@@ -566,7 +588,10 @@ namespace RGSS {
             rb_define_method(klass, "__draw_text_2args", draw_text4, 2);
             
             rb_define_method(klass, "text_size", text_size, 1);
-            
+
+            //储存
+            rb_define_method(klass, "save_png", save_png, 1);
+            rb_define_method(klass, "pixel_data", pixel_data, 0);
         }
         
     }

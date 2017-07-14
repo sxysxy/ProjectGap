@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <functional>
 #include "RGSSBitmap.h"
+#include "RGSSSprite.h"
 
 namespace RGSS {
     namespace Graphics {
@@ -13,20 +14,22 @@ namespace RGSS {
         tagGraphicsData GraphicsData;
         unsigned gTaskOrder;
 
+        bool onForeground;
         static VALUE __cdecl update(VALUE self) {
-            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+            onForeground = GetForegroundWindow() == gPluginData.GraphicsInformation.hWnd;
+
             for (auto it = GraphicsData.tasks.begin(); it != GraphicsData.tasks.end(); ){
                 if ((*it)->IsValid()) {
                     (*it)->render();
                     ++it;
-                }else {
+                } else {
                     auto p = it;
                     delete (*it);
                     ++it;
                     GraphicsData.tasks.erase(p);
                 }
             }
-            
+
             SDL_SetRenderTarget(renderer, nullptr);
             if (!GraphicsData.freeze) {
                 SDL_RenderPresent(renderer);
@@ -38,6 +41,7 @@ namespace RGSS {
             if (GraphicsData.frame_count == 60 && GraphicsData.show_fps) {
                 //用于显示fps的代码
             }
+            SDL_RenderClear(renderer);
             return Qnil;
         }
         static VALUE __cdecl clear(VALUE self) {
@@ -82,17 +86,32 @@ namespace RGSS {
             return Qnil;
         }
         static VALUE __cdecl snap_to_bitmap(VALUE self) {
-            VALUE bmp = rb_eval_cstring("Bitmap.new(Graphics.width, Graphics.height)");
+            VALUE bmp = rb_eval_string("Bitmap.new(Graphics.width, Graphics.height)");
             Bitmap::BitmapData *data = Bitmap::GetData(bmp);
             SDL_SetRenderTarget(Graphics::renderer, nullptr);
-            SDL_RenderReadPixels(Graphics::renderer, nullptr, 0, data->pixels, 4*data->width);
+            SDL_RenderReadPixels(Graphics::renderer, nullptr, SDL_PIXELFORMAT_RGBA8888, data->pixels, 4*data->width);
             SDL_UpdateTexture(data->texture, nullptr, data->pixels, 4*data->width);
             data->dirty = false;
             return bmp;
         }
-        void InitGraphics() {
-          //  puts("Plugin InitGraphics");
+        static VALUE __cdecl snap_to_save_png(VALUE self, VALUE filename) {
+            SDL_SetRenderTarget(Graphics::renderer, nullptr);
+            int w = FIX2INT(rb_eval_string("Graphics.width"));
+            int h = FIX2INT(rb_eval_string("Graphics.height"));
+            RColor *pixels = (RColor *)malloc(sizeof(RColor)*w*h);
+            SDL_RenderReadPixels(Graphics::renderer, nullptr, SDL_PIXELFORMAT_RGBA8888, pixels, 4 * w);
+            int depth; Uint32 rmask, gmask, bmask, amask;
+            SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_RGBA8888, &depth, &rmask, &gmask, &bmask, &amask);
+            SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pixels, w, h, depth, 4*w, rmask, gmask, bmask, amask);
+            IMG_SavePNG(s, RSTRING_PTR(filename));
+            SDL_FreeSurface(s);
+            return Qnil;
+        }
+        static VALUE is_on_foreground(VALUE self) {
+            return onForeground ? Qtrue : Qfalse;
+        }
 
+        void InitGraphics() {
             LoadLibScript("Graphics.rb");
             gTaskOrder = 0;
 
@@ -110,10 +129,21 @@ namespace RGSS {
             rb_define_module_function(klass, "__transition_2args", transition2, 2);
             rb_define_module_function(klass, "__transition_3args", transition3, 3);
             rb_define_module_function(klass, "snap_to_bitmap", snap_to_bitmap, 0);
+            rb_define_module_function(klass, "snap_to_save_png", snap_to_save_png, 1);
+            rb_define_module_function(klass, "on_foreground?", is_on_foreground, 0);
+
+            //一个Input.update的修改，当窗口不在最前面的时候，不进行update
+            rb_eval_string(
+                "module Input \r\n"
+                  "class << self \r\n"
+                    "alias :update_plugin_prepatch :update \r\n"
+                    "def update \r\n"
+                      "update_plugin_prepatch if Graphics.on_foreground? \r\n"
+                    "end \r\n"
+                  "end \r\n"
+                "end"
+            );
         }
 
-        VALUE rgss_check_sprite_dispose_protect(VALUE sprite) {
-            return rb_funcall2(sprite, rb_intern("disposed?"), 0, nullptr);
-        }
     }
 }
